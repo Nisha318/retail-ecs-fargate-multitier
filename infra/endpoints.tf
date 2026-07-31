@@ -1,29 +1,3 @@
-resource "aws_security_group" "vpc_endpoints" {
-  name        = "${var.project_name}-vpce"
-  description = "Allows HTTPS from within the VPC to interface endpoints"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    description = "HTTPS from VPC"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-  }
-
-  egress {
-    description = "All outbound traffic (interface endpoint ENIs do not require egress restriction beyond the VPC boundary)"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${var.project_name}-vpce-sg"
-  }
-}
-
 locals {
   interface_endpoints = [
     "ecr.api",

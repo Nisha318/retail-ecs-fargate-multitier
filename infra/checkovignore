@@ -35,3 +35,22 @@ CKV_AWS_150
 # listener in alb.tf). There is no way to restrict this CIDR block for a
 # public-facing load balancer without breaking that redirect behavior.
 CKV_AWS_260
+
+# CKV_AWS_18: the ALB access-log bucket itself does not have access logging
+# enabled (logging who accessed the log bucket). Technically valid but
+# recursive: enabling it would require a second "audit" bucket to receive
+# those logs, adding real cost and complexity for marginal benefit on a
+# personal project's log storage.
+CKV_AWS_18
+
+# CKV2_AWS_62: the ALB logs bucket has no S3 event notifications configured.
+# There is no Lambda, SNS, or other consumer reacting to new log objects in
+# this project, so a notification target would be an orphaned resource
+# with nothing listening to it.
+CKV2_AWS_62
+
+# CKV_AWS_144: the ALB logs bucket has no cross-region replication.
+# Disproportionate for a personal project's load balancer access logs - a
+# second bucket in another region plus a replication IAM role and config
+# is production-grade disaster-recovery tooling with no matching need here.
+CKV_AWS_144

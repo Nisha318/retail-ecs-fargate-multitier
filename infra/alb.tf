@@ -1,37 +1,3 @@
-resource "aws_security_group" "alb" {
-  name        = "${var.project_name}-alb"
-  description = "Public ALB security group"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    description = "HTTP from anywhere (redirects to HTTPS)"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "HTTPS from anywhere"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    description = "All outbound traffic (ALB must reach targets in any private subnet on any port they listen on)"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${var.project_name}-alb-sg"
-  }
-}
-
 # ALB access log bucket. The bucket policy grants write access specifically
 # to AWS's regional ELB log-delivery service account, not to any broader
 # principal. That account ID is fixed per region; the map below covers the
@@ -69,6 +35,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs" {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
     }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
