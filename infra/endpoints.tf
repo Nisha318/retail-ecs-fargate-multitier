@@ -54,6 +54,12 @@ resource "aws_vpc_endpoint" "dynamodb" {
 # Confirmed the hard way: task launch failed with CannotPullContainerError
 # / i/o timeout resolving public.ecr.aws before this endpoint was added.
 #
+# Service name requires the ".api" suffix - "com.amazonaws.us-east-1.ecr-
+# public" alone does not exist and fails with InvalidServiceName. The
+# correct name was confirmed directly against AWS (not just documentation)
+# via: aws ec2 describe-vpc-endpoint-services --region us-east-1
+#   --filters "Name=service-name,Values=*ecr*"
+#
 # AWS restricts this endpoint to us-east-1 only (per AWS's own ECR VPC
 # endpoint documentation: "VPC endpoints support Amazon ECR Public
 # repositories through the AWS API SDK endpoint in US East (N. Virginia)").
@@ -62,7 +68,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
 # to a different region.
 resource "aws_vpc_endpoint" "ecr_public" {
   vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.us-east-1.ecr-public"
+  service_name        = "com.amazonaws.us-east-1.ecr-public.api"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
@@ -71,7 +77,7 @@ resource "aws_vpc_endpoint" "ecr_public" {
   lifecycle {
     precondition {
       condition     = var.aws_region == "us-east-1"
-      error_message = "The ecr-public VPC endpoint is only available in us-east-1. Public ECR image pulls from a private subnet will fail in any other region without a NAT Gateway or other internet route."
+      error_message = "The ecr-public.api VPC endpoint is only available in us-east-1. Public ECR image pulls from a private subnet will fail in any other region without a NAT Gateway or other internet route."
     }
   }
 
