@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars and adjust as needed. Do not commit terraform.tfvars.
+
+aws_region   = "us-east-1"
+project_name = "retail-multitier"
