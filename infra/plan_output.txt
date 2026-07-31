@@ -1,0 +1,1701 @@
+[0m[1mdata.aws_availability_zones.available: Reading...[0m[0m
+[0m[1mdata.aws_route53_zone.main: Reading...[0m[0m
+[0m[1mdata.aws_region.current: Reading...[0m[0m
+[0m[1mdata.aws_caller_identity.current: Reading...[0m[0m
+[0m[1mdata.aws_region.current: Read complete after 0s [id=us-east-1][0m
+[0m[1mdata.aws_caller_identity.current: Read complete after 0s [id=347948520061][0m
+[0m[1mdata.aws_availability_zones.available: Read complete after 0s [id=us-east-1][0m
+[0m[1mdata.aws_route53_zone.main: Read complete after 0s [id=Z1016303223Q2E5T34B9S][0m
+
+OpenTofu used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+
+OpenTofu will perform the following actions:
+
+[1m  # aws_acm_certificate.site[0m will be created
+[0m  [32m+[0m[0m resource "aws_acm_certificate" "site" {
+      [32m+[0m[0m arn                       = (known after apply)
+      [32m+[0m[0m domain_name               = "retail-multitier.nishacloudprojects.click"
+      [32m+[0m[0m domain_validation_options = [
+          [32m+[0m[0m {
+              [32m+[0m[0m domain_name           = "retail-multitier.nishacloudprojects.click"
+              [32m+[0m[0m resource_record_name  = (known after apply)
+              [32m+[0m[0m resource_record_type  = (known after apply)
+              [32m+[0m[0m resource_record_value = (known after apply)
+            },
+        ]
+      [32m+[0m[0m id                        = (known after apply)
+      [32m+[0m[0m key_algorithm             = (known after apply)
+      [32m+[0m[0m not_after                 = (known after apply)
+      [32m+[0m[0m not_before                = (known after apply)
+      [32m+[0m[0m pending_renewal           = (known after apply)
+      [32m+[0m[0m renewal_eligibility       = (known after apply)
+      [32m+[0m[0m renewal_summary           = (known after apply)
+      [32m+[0m[0m status                    = (known after apply)
+      [32m+[0m[0m subject_alternative_names = [
+          [32m+[0m[0m "retail-multitier.nishacloudprojects.click",
+        ]
+      [32m+[0m[0m tags                      = {
+          [32m+[0m[0m "Name" = "retail-multitier-cert"
+        }
+      [32m+[0m[0m tags_all                  = {
+          [32m+[0m[0m "Name" = "retail-multitier-cert"
+        }
+      [32m+[0m[0m type                      = (known after apply)
+      [32m+[0m[0m validation_emails         = (known after apply)
+      [32m+[0m[0m validation_method         = "DNS"
+
+      [32m+[0m[0m options (known after apply)
+    }
+
+[1m  # aws_acm_certificate_validation.site[0m will be created
+[0m  [32m+[0m[0m resource "aws_acm_certificate_validation" "site" {
+      [32m+[0m[0m certificate_arn         = (known after apply)
+      [32m+[0m[0m id                      = (known after apply)
+      [32m+[0m[0m validation_record_fqdns = (known after apply)
+    }
+
+[1m  # aws_cloudwatch_log_group.ecs[0m will be created
+[0m  [32m+[0m[0m resource "aws_cloudwatch_log_group" "ecs" {
+      [32m+[0m[0m arn               = (known after apply)
+      [32m+[0m[0m id                = (known after apply)
+      [32m+[0m[0m kms_key_id        = (known after apply)
+      [32m+[0m[0m log_group_class   = (known after apply)
+      [32m+[0m[0m name              = "/ecs/retail-multitier"
+      [32m+[0m[0m name_prefix       = (known after apply)
+      [32m+[0m[0m retention_in_days = 365
+      [32m+[0m[0m skip_destroy      = false
+      [32m+[0m[0m tags              = {
+          [32m+[0m[0m "Name" = "retail-multitier-ecs-logs"
+        }
+      [32m+[0m[0m tags_all          = {
+          [32m+[0m[0m "Name" = "retail-multitier-ecs-logs"
+        }
+    }
+
+[1m  # aws_cloudwatch_log_group.vpc_flow[0m will be created
+[0m  [32m+[0m[0m resource "aws_cloudwatch_log_group" "vpc_flow" {
+      [32m+[0m[0m arn               = (known after apply)
+      [32m+[0m[0m id                = (known after apply)
+      [32m+[0m[0m kms_key_id        = (known after apply)
+      [32m+[0m[0m log_group_class   = (known after apply)
+      [32m+[0m[0m name              = "/vpc/flow/retail-multitier"
+      [32m+[0m[0m name_prefix       = (known after apply)
+      [32m+[0m[0m retention_in_days = 365
+      [32m+[0m[0m skip_destroy      = false
+      [32m+[0m[0m tags              = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpc-flow-logs"
+        }
+      [32m+[0m[0m tags_all          = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpc-flow-logs"
+        }
+    }
+
+[1m  # aws_cloudwatch_log_group.waf[0m will be created
+[0m  [32m+[0m[0m resource "aws_cloudwatch_log_group" "waf" {
+      [32m+[0m[0m arn               = (known after apply)
+      [32m+[0m[0m id                = (known after apply)
+      [32m+[0m[0m kms_key_id        = (known after apply)
+      [32m+[0m[0m log_group_class   = (known after apply)
+      [32m+[0m[0m name              = "aws-waf-logs-retail-multitier"
+      [32m+[0m[0m name_prefix       = (known after apply)
+      [32m+[0m[0m retention_in_days = 365
+      [32m+[0m[0m skip_destroy      = false
+      [32m+[0m[0m tags              = {
+          [32m+[0m[0m "Name" = "retail-multitier-waf-logs"
+        }
+      [32m+[0m[0m tags_all          = {
+          [32m+[0m[0m "Name" = "retail-multitier-waf-logs"
+        }
+    }
+
+[1m  # aws_default_security_group.default[0m will be created
+[0m  [32m+[0m[0m resource "aws_default_security_group" "default" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m description            = (known after apply)
+      [32m+[0m[0m egress                 = (known after apply)
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ingress                = (known after apply)
+      [32m+[0m[0m name                   = (known after apply)
+      [32m+[0m[0m name_prefix            = (known after apply)
+      [32m+[0m[0m owner_id               = (known after apply)
+      [32m+[0m[0m revoke_rules_on_delete = false
+      [32m+[0m[0m tags                   = {
+          [32m+[0m[0m "Name" = "retail-multitier-default-sg-locked"
+        }
+      [32m+[0m[0m tags_all               = {
+          [32m+[0m[0m "Name" = "retail-multitier-default-sg-locked"
+        }
+      [32m+[0m[0m vpc_id                 = (known after apply)
+    }
+
+[1m  # aws_dynamodb_table.carts[0m will be created
+[0m  [32m+[0m[0m resource "aws_dynamodb_table" "carts" {
+      [32m+[0m[0m arn              = (known after apply)
+      [32m+[0m[0m billing_mode     = "PAY_PER_REQUEST"
+      [32m+[0m[0m hash_key         = "id"
+      [32m+[0m[0m id               = (known after apply)
+      [32m+[0m[0m name             = "retail-multitier-carts"
+      [32m+[0m[0m read_capacity    = (known after apply)
+      [32m+[0m[0m stream_arn       = (known after apply)
+      [32m+[0m[0m stream_label     = (known after apply)
+      [32m+[0m[0m stream_view_type = (known after apply)
+      [32m+[0m[0m tags             = {
+          [32m+[0m[0m "Name" = "retail-multitier-carts"
+        }
+      [32m+[0m[0m tags_all         = {
+          [32m+[0m[0m "Name" = "retail-multitier-carts"
+        }
+      [32m+[0m[0m write_capacity   = (known after apply)
+
+      [32m+[0m[0m attribute {
+          [32m+[0m[0m name = "customerId"
+          [32m+[0m[0m type = "S"
+        }
+      [32m+[0m[0m attribute {
+          [32m+[0m[0m name = "id"
+          [32m+[0m[0m type = "S"
+        }
+
+      [32m+[0m[0m global_secondary_index {
+          [32m+[0m[0m hash_key           = "customerId"
+          [32m+[0m[0m name               = "idx_global_customerId"
+          [32m+[0m[0m non_key_attributes = []
+          [32m+[0m[0m projection_type    = "ALL"
+          [32m+[0m[0m read_capacity      = (known after apply)
+          [32m+[0m[0m write_capacity     = (known after apply)
+        }
+
+      [32m+[0m[0m point_in_time_recovery {
+          [32m+[0m[0m enabled                 = true
+          [32m+[0m[0m recovery_period_in_days = (known after apply)
+        }
+
+      [32m+[0m[0m server_side_encryption (known after apply)
+
+      [32m+[0m[0m ttl (known after apply)
+    }
+
+[1m  # aws_ecs_cluster.main[0m will be created
+[0m  [32m+[0m[0m resource "aws_ecs_cluster" "main" {
+      [32m+[0m[0m arn      = (known after apply)
+      [32m+[0m[0m id       = (known after apply)
+      [32m+[0m[0m name     = "retail-multitier-cluster"
+      [32m+[0m[0m tags     = {
+          [32m+[0m[0m "Name" = "retail-multitier-cluster"
+        }
+      [32m+[0m[0m tags_all = {
+          [32m+[0m[0m "Name" = "retail-multitier-cluster"
+        }
+
+      [32m+[0m[0m setting {
+          [32m+[0m[0m name  = "containerInsights"
+          [32m+[0m[0m value = "enhanced"
+        }
+    }
+
+[1m  # aws_ecs_service.carts[0m will be created
+[0m  [32m+[0m[0m resource "aws_ecs_service" "carts" {
+      [32m+[0m[0m availability_zone_rebalancing      = "DISABLED"
+      [32m+[0m[0m cluster                            = (known after apply)
+      [32m+[0m[0m deployment_maximum_percent         = 200
+      [32m+[0m[0m deployment_minimum_healthy_percent = 100
+      [32m+[0m[0m desired_count                      = 1
+      [32m+[0m[0m enable_ecs_managed_tags            = false
+      [32m+[0m[0m enable_execute_command             = false
+      [32m+[0m[0m iam_role                           = (known after apply)
+      [32m+[0m[0m id                                 = (known after apply)
+      [32m+[0m[0m launch_type                        = "FARGATE"
+      [32m+[0m[0m name                               = "carts"
+      [32m+[0m[0m platform_version                   = (known after apply)
+      [32m+[0m[0m scheduling_strategy                = "REPLICA"
+      [32m+[0m[0m tags                               = {
+          [32m+[0m[0m "Name" = "retail-multitier-carts-service"
+        }
+      [32m+[0m[0m tags_all                           = {
+          [32m+[0m[0m "Name" = "retail-multitier-carts-service"
+        }
+      [32m+[0m[0m task_definition                    = (known after apply)
+      [32m+[0m[0m triggers                           = (known after apply)
+      [32m+[0m[0m wait_for_steady_state              = false
+
+      [32m+[0m[0m network_configuration {
+          [32m+[0m[0m assign_public_ip = false
+          [32m+[0m[0m security_groups  = (known after apply)
+          [32m+[0m[0m subnets          = (known after apply)
+        }
+
+      [32m+[0m[0m service_registries {
+          [32m+[0m[0m registry_arn = (known after apply)
+        }
+    }
+
+[1m  # aws_ecs_service.ui[0m will be created
+[0m  [32m+[0m[0m resource "aws_ecs_service" "ui" {
+      [32m+[0m[0m availability_zone_rebalancing      = "DISABLED"
+      [32m+[0m[0m cluster                            = (known after apply)
+      [32m+[0m[0m deployment_maximum_percent         = 200
+      [32m+[0m[0m deployment_minimum_healthy_percent = 100
+      [32m+[0m[0m desired_count                      = 2
+      [32m+[0m[0m enable_ecs_managed_tags            = false
+      [32m+[0m[0m enable_execute_command             = false
+      [32m+[0m[0m health_check_grace_period_seconds  = 30
+      [32m+[0m[0m iam_role                           = (known after apply)
+      [32m+[0m[0m id                                 = (known after apply)
+      [32m+[0m[0m launch_type                        = "FARGATE"
+      [32m+[0m[0m name                               = "ui"
+      [32m+[0m[0m platform_version                   = (known after apply)
+      [32m+[0m[0m scheduling_strategy                = "REPLICA"
+      [32m+[0m[0m tags                               = {
+          [32m+[0m[0m "Name" = "retail-multitier-ui-service"
+        }
+      [32m+[0m[0m tags_all                           = {
+          [32m+[0m[0m "Name" = "retail-multitier-ui-service"
+        }
+      [32m+[0m[0m task_definition                    = (known after apply)
+      [32m+[0m[0m triggers                           = (known after apply)
+      [32m+[0m[0m wait_for_steady_state              = false
+
+      [32m+[0m[0m load_balancer {
+          [32m+[0m[0m container_name   = "ui"
+          [32m+[0m[0m container_port   = 8080
+          [32m+[0m[0m target_group_arn = (known after apply)
+        }
+
+      [32m+[0m[0m network_configuration {
+          [32m+[0m[0m assign_public_ip = false
+          [32m+[0m[0m security_groups  = (known after apply)
+          [32m+[0m[0m subnets          = (known after apply)
+        }
+    }
+
+[1m  # aws_ecs_task_definition.carts[0m will be created
+[0m  [32m+[0m[0m resource "aws_ecs_task_definition" "carts" {
+      [32m+[0m[0m arn                      = (known after apply)
+      [32m+[0m[0m arn_without_revision     = (known after apply)
+      [32m+[0m[0m container_definitions    = jsonencode(
+            [
+              [32m+[0m[0m {
+                  [32m+[0m[0m environment      = [
+                      [32m+[0m[0m {
+                          [32m+[0m[0m name  = "AWS_REGION"
+                          [32m+[0m[0m value = "us-east-1"
+                        },
+                      [32m+[0m[0m {
+                          [32m+[0m[0m name  = "RETAIL_CART_PERSISTENCE_DYNAMODB_TABLE_NAME"
+                          [32m+[0m[0m value = "retail-multitier-carts"
+                        },
+                      [32m+[0m[0m {
+                          [32m+[0m[0m name  = "RETAIL_CART_PERSISTENCE_PROVIDER"
+                          [32m+[0m[0m value = "dynamodb"
+                        },
+                    ]
+                  [32m+[0m[0m essential        = true
+                  [32m+[0m[0m healthCheck      = {
+                      [32m+[0m[0m command     = [
+                          [32m+[0m[0m "CMD-SHELL",
+                          [32m+[0m[0m "curl -f http://localhost:8080/actuator/health || exit 1",
+                        ]
+                      [32m+[0m[0m interval    = 15
+                      [32m+[0m[0m retries     = 3
+                      [32m+[0m[0m startPeriod = 30
+                      [32m+[0m[0m timeout     = 5
+                    }
+                  [32m+[0m[0m image            = "public.ecr.aws/aws-containers/retail-store-sample-cart:1.2.4"
+                  [32m+[0m[0m logConfiguration = {
+                      [32m+[0m[0m logDriver = "awslogs"
+                      [32m+[0m[0m options   = {
+                          [32m+[0m[0m awslogs-group         = "/ecs/retail-multitier"
+                          [32m+[0m[0m awslogs-region        = "us-east-1"
+                          [32m+[0m[0m awslogs-stream-prefix = "carts"
+                        }
+                    }
+                  [32m+[0m[0m name             = "carts"
+                  [32m+[0m[0m portMappings     = [
+                      [32m+[0m[0m {
+                          [32m+[0m[0m containerPort = 8080
+                          [32m+[0m[0m protocol      = "tcp"
+                        },
+                    ]
+                },
+            ]
+        )
+      [32m+[0m[0m cpu                      = "512"
+      [32m+[0m[0m enable_fault_injection   = (known after apply)
+      [32m+[0m[0m execution_role_arn       = (known after apply)
+      [32m+[0m[0m family                   = "retail-multitier-carts"
+      [32m+[0m[0m id                       = (known after apply)
+      [32m+[0m[0m memory                   = "1024"
+      [32m+[0m[0m network_mode             = "awsvpc"
+      [32m+[0m[0m requires_compatibilities = [
+          [32m+[0m[0m "FARGATE",
+        ]
+      [32m+[0m[0m revision                 = (known after apply)
+      [32m+[0m[0m skip_destroy             = false
+      [32m+[0m[0m tags                     = {
+          [32m+[0m[0m "Name" = "retail-multitier-carts-taskdef"
+        }
+      [32m+[0m[0m tags_all                 = {
+          [32m+[0m[0m "Name" = "retail-multitier-carts-taskdef"
+        }
+      [32m+[0m[0m task_role_arn            = (known after apply)
+      [32m+[0m[0m track_latest             = false
+
+      [32m+[0m[0m runtime_platform {
+          [32m+[0m[0m cpu_architecture        = "X86_64"
+          [32m+[0m[0m operating_system_family = "LINUX"
+        }
+    }
+
+[1m  # aws_ecs_task_definition.ui[0m will be created
+[0m  [32m+[0m[0m resource "aws_ecs_task_definition" "ui" {
+      [32m+[0m[0m arn                      = (known after apply)
+      [32m+[0m[0m arn_without_revision     = (known after apply)
+      [32m+[0m[0m container_definitions    = jsonencode(
+            [
+              [32m+[0m[0m {
+                  [32m+[0m[0m environment      = [
+                      [32m+[0m[0m {
+                          [32m+[0m[0m name  = "RETAIL_CARTS_ENDPOINT"
+                          [32m+[0m[0m value = "http://carts.retail-multitier.local:8080"
+                        },
+                    ]
+                  [32m+[0m[0m essential        = true
+                  [32m+[0m[0m healthCheck      = {
+                      [32m+[0m[0m command     = [
+                          [32m+[0m[0m "CMD-SHELL",
+                          [32m+[0m[0m "curl -f http://localhost:8080/actuator/health || exit 1",
+                        ]
+                      [32m+[0m[0m interval    = 15
+                      [32m+[0m[0m retries     = 3
+                      [32m+[0m[0m startPeriod = 30
+                      [32m+[0m[0m timeout     = 5
+                    }
+                  [32m+[0m[0m image            = "public.ecr.aws/aws-containers/retail-store-sample-ui:1.2.4"
+                  [32m+[0m[0m logConfiguration = {
+                      [32m+[0m[0m logDriver = "awslogs"
+                      [32m+[0m[0m options   = {
+                          [32m+[0m[0m awslogs-group         = "/ecs/retail-multitier"
+                          [32m+[0m[0m awslogs-region        = "us-east-1"
+                          [32m+[0m[0m awslogs-stream-prefix = "ui"
+                        }
+                    }
+                  [32m+[0m[0m name             = "ui"
+                  [32m+[0m[0m portMappings     = [
+                      [32m+[0m[0m {
+                          [32m+[0m[0m containerPort = 8080
+                          [32m+[0m[0m protocol      = "tcp"
+                        },
+                    ]
+                },
+            ]
+        )
+      [32m+[0m[0m cpu                      = "512"
+      [32m+[0m[0m enable_fault_injection   = (known after apply)
+      [32m+[0m[0m execution_role_arn       = (known after apply)
+      [32m+[0m[0m family                   = "retail-multitier-ui"
+      [32m+[0m[0m id                       = (known after apply)
+      [32m+[0m[0m memory                   = "1024"
+      [32m+[0m[0m network_mode             = "awsvpc"
+      [32m+[0m[0m requires_compatibilities = [
+          [32m+[0m[0m "FARGATE",
+        ]
+      [32m+[0m[0m revision                 = (known after apply)
+      [32m+[0m[0m skip_destroy             = false
+      [32m+[0m[0m tags                     = {
+          [32m+[0m[0m "Name" = "retail-multitier-ui-taskdef"
+        }
+      [32m+[0m[0m tags_all                 = {
+          [32m+[0m[0m "Name" = "retail-multitier-ui-taskdef"
+        }
+      [32m+[0m[0m task_role_arn            = (known after apply)
+      [32m+[0m[0m track_latest             = false
+
+      [32m+[0m[0m runtime_platform {
+          [32m+[0m[0m cpu_architecture        = "X86_64"
+          [32m+[0m[0m operating_system_family = "LINUX"
+        }
+    }
+
+[1m  # aws_flow_log.vpc[0m will be created
+[0m  [32m+[0m[0m resource "aws_flow_log" "vpc" {
+      [32m+[0m[0m arn                      = (known after apply)
+      [32m+[0m[0m iam_role_arn             = (known after apply)
+      [32m+[0m[0m id                       = (known after apply)
+      [32m+[0m[0m log_destination          = (known after apply)
+      [32m+[0m[0m log_destination_type     = "cloud-watch-logs"
+      [32m+[0m[0m log_format               = (known after apply)
+      [32m+[0m[0m log_group_name           = (known after apply)
+      [32m+[0m[0m max_aggregation_interval = 600
+      [32m+[0m[0m tags                     = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpc-flow-log"
+        }
+      [32m+[0m[0m tags_all                 = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpc-flow-log"
+        }
+      [32m+[0m[0m traffic_type             = "ALL"
+      [32m+[0m[0m vpc_id                   = (known after apply)
+    }
+
+[1m  # aws_iam_role.carts_task[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "carts_task" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "ecs-tasks.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = "retail-multitier-carts-task-role"
+      [32m+[0m[0m name_prefix           = (known after apply)
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.flow_logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "flow_logs" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "vpc-flow-logs.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = "retail-multitier-vpc-flow-logs-role"
+      [32m+[0m[0m name_prefix           = (known after apply)
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.task_execution[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "task_execution" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "ecs-tasks.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = "retail-multitier-task-execution-role"
+      [32m+[0m[0m name_prefix           = (known after apply)
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.ui_task[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "ui_task" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "ecs-tasks.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = "retail-multitier-ui-task-role"
+      [32m+[0m[0m name_prefix           = (known after apply)
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.carts_dynamodb[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "carts_dynamodb" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "retail-multitier-carts-dynamodb-policy"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.flow_logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "flow_logs" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "retail-multitier-vpc-flow-logs-policy"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy_attachment.task_execution_managed[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy_attachment" "task_execution_managed" {
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+      [32m+[0m[0m role       = "retail-multitier-task-execution-role"
+    }
+
+[1m  # aws_internet_gateway.main[0m will be created
+[0m  [32m+[0m[0m resource "aws_internet_gateway" "main" {
+      [32m+[0m[0m arn      = (known after apply)
+      [32m+[0m[0m id       = (known after apply)
+      [32m+[0m[0m owner_id = (known after apply)
+      [32m+[0m[0m tags     = {
+          [32m+[0m[0m "Name" = "retail-multitier-igw"
+        }
+      [32m+[0m[0m tags_all = {
+          [32m+[0m[0m "Name" = "retail-multitier-igw"
+        }
+      [32m+[0m[0m vpc_id   = (known after apply)
+    }
+
+[1m  # aws_kms_alias.logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_kms_alias" "logs" {
+      [32m+[0m[0m arn            = (known after apply)
+      [32m+[0m[0m id             = (known after apply)
+      [32m+[0m[0m name           = "alias/retail-multitier-logs"
+      [32m+[0m[0m name_prefix    = (known after apply)
+      [32m+[0m[0m target_key_arn = (known after apply)
+      [32m+[0m[0m target_key_id  = (known after apply)
+    }
+
+[1m  # aws_kms_key.logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_kms_key" "logs" {
+      [32m+[0m[0m arn                                = (known after apply)
+      [32m+[0m[0m bypass_policy_lockout_safety_check = false
+      [32m+[0m[0m customer_master_key_spec           = "SYMMETRIC_DEFAULT"
+      [32m+[0m[0m deletion_window_in_days            = 30
+      [32m+[0m[0m description                        = "KMS key for CloudWatch Logs encryption"
+      [32m+[0m[0m enable_key_rotation                = true
+      [32m+[0m[0m id                                 = (known after apply)
+      [32m+[0m[0m is_enabled                         = true
+      [32m+[0m[0m key_id                             = (known after apply)
+      [32m+[0m[0m key_usage                          = "ENCRYPT_DECRYPT"
+      [32m+[0m[0m multi_region                       = (known after apply)
+      [32m+[0m[0m policy                             = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "kms:*"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m AWS = "arn:aws:iam::347948520061:root"
+                        }
+                      [32m+[0m[0m Resource  = "*"
+                      [32m+[0m[0m Sid       = "EnableAccountRootPermissions"
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = [
+                          [32m+[0m[0m "kms:Encrypt*",
+                          [32m+[0m[0m "kms:Decrypt*",
+                          [32m+[0m[0m "kms:ReEncrypt*",
+                          [32m+[0m[0m "kms:GenerateDataKey*",
+                          [32m+[0m[0m "kms:Describe*",
+                        ]
+                      [32m+[0m[0m Condition = {
+                          [32m+[0m[0m ArnLike = {
+                              [32m+[0m[0m "kms:EncryptionContext:aws:logs:arn" = [
+                                  [32m+[0m[0m "arn:aws:logs:us-east-1:347948520061:log-group:/ecs/retail-multitier",
+                                  [32m+[0m[0m "arn:aws:logs:us-east-1:347948520061:log-group:/vpc/flow/retail-multitier",
+                                  [32m+[0m[0m "arn:aws:logs:us-east-1:347948520061:log-group:aws-waf-logs-retail-multitier",
+                                ]
+                            }
+                        }
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "logs.us-east-1.amazonaws.com"
+                        }
+                      [32m+[0m[0m Resource  = "*"
+                      [32m+[0m[0m Sid       = "AllowCloudWatchLogs"
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m rotation_period_in_days            = (known after apply)
+      [32m+[0m[0m tags                               = {
+          [32m+[0m[0m "Name" = "retail-multitier-logs-kms"
+        }
+      [32m+[0m[0m tags_all                           = {
+          [32m+[0m[0m "Name" = "retail-multitier-logs-kms"
+        }
+    }
+
+[1m  # aws_lb.main[0m will be created
+[0m  [32m+[0m[0m resource "aws_lb" "main" {
+      [32m+[0m[0m arn                                                          = (known after apply)
+      [32m+[0m[0m arn_suffix                                                   = (known after apply)
+      [32m+[0m[0m client_keep_alive                                            = 3600
+      [32m+[0m[0m desync_mitigation_mode                                       = "defensive"
+      [32m+[0m[0m dns_name                                                     = (known after apply)
+      [32m+[0m[0m drop_invalid_header_fields                                   = true
+      [32m+[0m[0m enable_deletion_protection                                   = false
+      [32m+[0m[0m enable_http2                                                 = true
+      [32m+[0m[0m enable_tls_version_and_cipher_suite_headers                  = false
+      [32m+[0m[0m enable_waf_fail_open                                         = false
+      [32m+[0m[0m enable_xff_client_port                                       = false
+      [32m+[0m[0m enable_zonal_shift                                           = false
+      [32m+[0m[0m enforce_security_group_inbound_rules_on_private_link_traffic = (known after apply)
+      [32m+[0m[0m id                                                           = (known after apply)
+      [32m+[0m[0m idle_timeout                                                 = 60
+      [32m+[0m[0m internal                                                     = false
+      [32m+[0m[0m ip_address_type                                              = (known after apply)
+      [32m+[0m[0m load_balancer_type                                           = "application"
+      [32m+[0m[0m name                                                         = "retail-multitier-alb"
+      [32m+[0m[0m name_prefix                                                  = (known after apply)
+      [32m+[0m[0m preserve_host_header                                         = false
+      [32m+[0m[0m security_groups                                              = (known after apply)
+      [32m+[0m[0m subnets                                                      = (known after apply)
+      [32m+[0m[0m tags                                                         = {
+          [32m+[0m[0m "Name" = "retail-multitier-alb"
+        }
+      [32m+[0m[0m tags_all                                                     = {
+          [32m+[0m[0m "Name" = "retail-multitier-alb"
+        }
+      [32m+[0m[0m vpc_id                                                       = (known after apply)
+      [32m+[0m[0m xff_header_processing_mode                                   = "append"
+      [32m+[0m[0m zone_id                                                      = (known after apply)
+
+      [32m+[0m[0m access_logs {
+          [32m+[0m[0m bucket  = (known after apply)
+          [32m+[0m[0m enabled = true
+        }
+
+      [32m+[0m[0m subnet_mapping (known after apply)
+    }
+
+[1m  # aws_lb_listener.http_redirect[0m will be created
+[0m  [32m+[0m[0m resource "aws_lb_listener" "http_redirect" {
+      [32m+[0m[0m arn                                                                   = (known after apply)
+      [32m+[0m[0m id                                                                    = (known after apply)
+      [32m+[0m[0m load_balancer_arn                                                     = (known after apply)
+      [32m+[0m[0m port                                                                  = 80
+      [32m+[0m[0m protocol                                                              = "HTTP"
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_max_age_header_value             = (known after apply)
+      [32m+[0m[0m routing_http_response_content_security_policy_header_value            = (known after apply)
+      [32m+[0m[0m routing_http_response_server_enabled                                  = (known after apply)
+      [32m+[0m[0m routing_http_response_strict_transport_security_header_value          = (known after apply)
+      [32m+[0m[0m routing_http_response_x_content_type_options_header_value             = (known after apply)
+      [32m+[0m[0m routing_http_response_x_frame_options_header_value                    = (known after apply)
+      [32m+[0m[0m ssl_policy                                                            = (known after apply)
+      [32m+[0m[0m tags_all                                                              = (known after apply)
+      [32m+[0m[0m tcp_idle_timeout_seconds                                              = (known after apply)
+
+      [32m+[0m[0m default_action {
+          [32m+[0m[0m order = (known after apply)
+          [32m+[0m[0m type  = "redirect"
+
+          [32m+[0m[0m redirect {
+              [32m+[0m[0m host        = "#{host}"
+              [32m+[0m[0m path        = "/#{path}"
+              [32m+[0m[0m port        = "443"
+              [32m+[0m[0m protocol    = "HTTPS"
+              [32m+[0m[0m query       = "#{query}"
+              [32m+[0m[0m status_code = "HTTP_301"
+            }
+        }
+
+      [32m+[0m[0m mutual_authentication (known after apply)
+    }
+
+[1m  # aws_lb_listener.https[0m will be created
+[0m  [32m+[0m[0m resource "aws_lb_listener" "https" {
+      [32m+[0m[0m arn                                                                   = (known after apply)
+      [32m+[0m[0m certificate_arn                                                       = (known after apply)
+      [32m+[0m[0m id                                                                    = (known after apply)
+      [32m+[0m[0m load_balancer_arn                                                     = (known after apply)
+      [32m+[0m[0m port                                                                  = 443
+      [32m+[0m[0m protocol                                                              = "HTTPS"
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_max_age_header_value             = (known after apply)
+      [32m+[0m[0m routing_http_response_content_security_policy_header_value            = (known after apply)
+      [32m+[0m[0m routing_http_response_server_enabled                                  = (known after apply)
+      [32m+[0m[0m routing_http_response_strict_transport_security_header_value          = (known after apply)
+      [32m+[0m[0m routing_http_response_x_content_type_options_header_value             = (known after apply)
+      [32m+[0m[0m routing_http_response_x_frame_options_header_value                    = (known after apply)
+      [32m+[0m[0m ssl_policy                                                            = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+      [32m+[0m[0m tags_all                                                              = (known after apply)
+      [32m+[0m[0m tcp_idle_timeout_seconds                                              = (known after apply)
+
+      [32m+[0m[0m default_action {
+          [32m+[0m[0m order            = (known after apply)
+          [32m+[0m[0m target_group_arn = (known after apply)
+          [32m+[0m[0m type             = "forward"
+        }
+
+      [32m+[0m[0m mutual_authentication (known after apply)
+    }
+
+[1m  # aws_lb_target_group.ui[0m will be created
+[0m  [32m+[0m[0m resource "aws_lb_target_group" "ui" {
+      [32m+[0m[0m arn                                = (known after apply)
+      [32m+[0m[0m arn_suffix                         = (known after apply)
+      [32m+[0m[0m connection_termination             = (known after apply)
+      [32m+[0m[0m deregistration_delay               = "300"
+      [32m+[0m[0m id                                 = (known after apply)
+      [32m+[0m[0m ip_address_type                    = (known after apply)
+      [32m+[0m[0m lambda_multi_value_headers_enabled = false
+      [32m+[0m[0m load_balancer_arns                 = (known after apply)
+      [32m+[0m[0m load_balancing_algorithm_type      = (known after apply)
+      [32m+[0m[0m load_balancing_anomaly_mitigation  = (known after apply)
+      [32m+[0m[0m load_balancing_cross_zone_enabled  = (known after apply)
+      [32m+[0m[0m name                               = "retail-multitier-ui-tg"
+      [32m+[0m[0m name_prefix                        = (known after apply)
+      [32m+[0m[0m port                               = 8080
+      [32m+[0m[0m preserve_client_ip                 = (known after apply)
+      [32m+[0m[0m protocol                           = "HTTP"
+      [32m+[0m[0m protocol_version                   = (known after apply)
+      [32m+[0m[0m proxy_protocol_v2                  = false
+      [32m+[0m[0m slow_start                         = 0
+      [32m+[0m[0m tags                               = {
+          [32m+[0m[0m "Name" = "retail-multitier-ui-tg"
+        }
+      [32m+[0m[0m tags_all                           = {
+          [32m+[0m[0m "Name" = "retail-multitier-ui-tg"
+        }
+      [32m+[0m[0m target_type                        = "ip"
+      [32m+[0m[0m vpc_id                             = (known after apply)
+
+      [32m+[0m[0m health_check {
+          [32m+[0m[0m enabled             = true
+          [32m+[0m[0m healthy_threshold   = 2
+          [32m+[0m[0m interval            = 15
+          [32m+[0m[0m matcher             = (known after apply)
+          [32m+[0m[0m path                = "/actuator/health"
+          [32m+[0m[0m port                = "traffic-port"
+          [32m+[0m[0m protocol            = "HTTP"
+          [32m+[0m[0m timeout             = 5
+          [32m+[0m[0m unhealthy_threshold = 3
+        }
+
+      [32m+[0m[0m stickiness (known after apply)
+
+      [32m+[0m[0m target_failover (known after apply)
+
+      [32m+[0m[0m target_group_health (known after apply)
+
+      [32m+[0m[0m target_health_state (known after apply)
+    }
+
+[1m  # aws_route53_record.cert_validation["retail-multitier.nishacloudprojects.click"][0m will be created
+[0m  [32m+[0m[0m resource "aws_route53_record" "cert_validation" {
+      [32m+[0m[0m allow_overwrite = true
+      [32m+[0m[0m fqdn            = (known after apply)
+      [32m+[0m[0m id              = (known after apply)
+      [32m+[0m[0m name            = (known after apply)
+      [32m+[0m[0m records         = (known after apply)
+      [32m+[0m[0m ttl             = 60
+      [32m+[0m[0m type            = (known after apply)
+      [32m+[0m[0m zone_id         = "Z1016303223Q2E5T34B9S"
+    }
+
+[1m  # aws_route53_record.site[0m will be created
+[0m  [32m+[0m[0m resource "aws_route53_record" "site" {
+      [32m+[0m[0m allow_overwrite = (known after apply)
+      [32m+[0m[0m fqdn            = (known after apply)
+      [32m+[0m[0m id              = (known after apply)
+      [32m+[0m[0m name            = "retail-multitier.nishacloudprojects.click"
+      [32m+[0m[0m type            = "A"
+      [32m+[0m[0m zone_id         = "Z1016303223Q2E5T34B9S"
+
+      [32m+[0m[0m alias {
+          [32m+[0m[0m evaluate_target_health = true
+          [32m+[0m[0m name                   = (known after apply)
+          [32m+[0m[0m zone_id                = (known after apply)
+        }
+    }
+
+[1m  # aws_route_table.private[0m will be created
+[0m  [32m+[0m[0m resource "aws_route_table" "private" {
+      [32m+[0m[0m arn              = (known after apply)
+      [32m+[0m[0m id               = (known after apply)
+      [32m+[0m[0m owner_id         = (known after apply)
+      [32m+[0m[0m propagating_vgws = (known after apply)
+      [32m+[0m[0m route            = (known after apply)
+      [32m+[0m[0m tags             = {
+          [32m+[0m[0m "Name" = "retail-multitier-private-rt"
+        }
+      [32m+[0m[0m tags_all         = {
+          [32m+[0m[0m "Name" = "retail-multitier-private-rt"
+        }
+      [32m+[0m[0m vpc_id           = (known after apply)
+    }
+
+[1m  # aws_route_table.public[0m will be created
+[0m  [32m+[0m[0m resource "aws_route_table" "public" {
+      [32m+[0m[0m arn              = (known after apply)
+      [32m+[0m[0m id               = (known after apply)
+      [32m+[0m[0m owner_id         = (known after apply)
+      [32m+[0m[0m propagating_vgws = (known after apply)
+      [32m+[0m[0m route            = [
+          [32m+[0m[0m {
+              [32m+[0m[0m carrier_gateway_id         = ""
+              [32m+[0m[0m cidr_block                 = "0.0.0.0/0"
+              [32m+[0m[0m core_network_arn           = ""
+              [32m+[0m[0m destination_prefix_list_id = ""
+              [32m+[0m[0m egress_only_gateway_id     = ""
+              [32m+[0m[0m gateway_id                 = (known after apply)
+              [32m+[0m[0m ipv6_cidr_block            = ""
+              [32m+[0m[0m local_gateway_id           = ""
+              [32m+[0m[0m nat_gateway_id             = ""
+              [32m+[0m[0m network_interface_id       = ""
+              [32m+[0m[0m transit_gateway_id         = ""
+              [32m+[0m[0m vpc_endpoint_id            = ""
+              [32m+[0m[0m vpc_peering_connection_id  = ""
+            },
+        ]
+      [32m+[0m[0m tags             = {
+          [32m+[0m[0m "Name" = "retail-multitier-public-rt"
+        }
+      [32m+[0m[0m tags_all         = {
+          [32m+[0m[0m "Name" = "retail-multitier-public-rt"
+        }
+      [32m+[0m[0m vpc_id           = (known after apply)
+    }
+
+[1m  # aws_route_table_association.private[0][0m will be created
+[0m  [32m+[0m[0m resource "aws_route_table_association" "private" {
+      [32m+[0m[0m id             = (known after apply)
+      [32m+[0m[0m route_table_id = (known after apply)
+      [32m+[0m[0m subnet_id      = (known after apply)
+    }
+
+[1m  # aws_route_table_association.private[1][0m will be created
+[0m  [32m+[0m[0m resource "aws_route_table_association" "private" {
+      [32m+[0m[0m id             = (known after apply)
+      [32m+[0m[0m route_table_id = (known after apply)
+      [32m+[0m[0m subnet_id      = (known after apply)
+    }
+
+[1m  # aws_route_table_association.public[0][0m will be created
+[0m  [32m+[0m[0m resource "aws_route_table_association" "public" {
+      [32m+[0m[0m id             = (known after apply)
+      [32m+[0m[0m route_table_id = (known after apply)
+      [32m+[0m[0m subnet_id      = (known after apply)
+    }
+
+[1m  # aws_route_table_association.public[1][0m will be created
+[0m  [32m+[0m[0m resource "aws_route_table_association" "public" {
+      [32m+[0m[0m id             = (known after apply)
+      [32m+[0m[0m route_table_id = (known after apply)
+      [32m+[0m[0m subnet_id      = (known after apply)
+    }
+
+[1m  # aws_s3_bucket.alb_logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_s3_bucket" "alb_logs" {
+      [32m+[0m[0m acceleration_status         = (known after apply)
+      [32m+[0m[0m acl                         = (known after apply)
+      [32m+[0m[0m arn                         = (known after apply)
+      [32m+[0m[0m bucket                      = "retail-multitier-alb-logs-347948520061"
+      [32m+[0m[0m bucket_domain_name          = (known after apply)
+      [32m+[0m[0m bucket_prefix               = (known after apply)
+      [32m+[0m[0m bucket_regional_domain_name = (known after apply)
+      [32m+[0m[0m force_destroy               = true
+      [32m+[0m[0m hosted_zone_id              = (known after apply)
+      [32m+[0m[0m id                          = (known after apply)
+      [32m+[0m[0m object_lock_enabled         = (known after apply)
+      [32m+[0m[0m policy                      = (known after apply)
+      [32m+[0m[0m region                      = (known after apply)
+      [32m+[0m[0m request_payer               = (known after apply)
+      [32m+[0m[0m tags                        = {
+          [32m+[0m[0m "Name" = "retail-multitier-alb-logs"
+        }
+      [32m+[0m[0m tags_all                    = {
+          [32m+[0m[0m "Name" = "retail-multitier-alb-logs"
+        }
+      [32m+[0m[0m website_domain              = (known after apply)
+      [32m+[0m[0m website_endpoint            = (known after apply)
+
+      [32m+[0m[0m cors_rule (known after apply)
+
+      [32m+[0m[0m grant (known after apply)
+
+      [32m+[0m[0m lifecycle_rule (known after apply)
+
+      [32m+[0m[0m logging (known after apply)
+
+      [32m+[0m[0m object_lock_configuration (known after apply)
+
+      [32m+[0m[0m replication_configuration (known after apply)
+
+      [32m+[0m[0m server_side_encryption_configuration (known after apply)
+
+      [32m+[0m[0m versioning (known after apply)
+
+      [32m+[0m[0m website (known after apply)
+    }
+
+[1m  # aws_s3_bucket_lifecycle_configuration.alb_logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
+      [32m+[0m[0m bucket                                 = (known after apply)
+      [32m+[0m[0m expected_bucket_owner                  = (known after apply)
+      [32m+[0m[0m id                                     = (known after apply)
+      [32m+[0m[0m transition_default_minimum_object_size = "all_storage_classes_128K"
+
+      [32m+[0m[0m rule {
+          [32m+[0m[0m id     = "expire-old-logs"
+          [32m+[0m[0m status = "Enabled"
+
+          [32m+[0m[0m abort_incomplete_multipart_upload {
+              [32m+[0m[0m days_after_initiation = 7
+            }
+
+          [32m+[0m[0m expiration {
+              [32m+[0m[0m days                         = 90
+              [32m+[0m[0m expired_object_delete_marker = false
+            }
+
+          [32m+[0m[0m filter {
+            }
+
+          [32m+[0m[0m noncurrent_version_expiration {
+              [32m+[0m[0m noncurrent_days = 30
+            }
+        }
+    }
+
+[1m  # aws_s3_bucket_policy.alb_logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_s3_bucket_policy" "alb_logs" {
+      [32m+[0m[0m bucket = (known after apply)
+      [32m+[0m[0m id     = (known after apply)
+      [32m+[0m[0m policy = (known after apply)
+    }
+
+[1m  # aws_s3_bucket_public_access_block.alb_logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_s3_bucket_public_access_block" "alb_logs" {
+      [32m+[0m[0m block_public_acls       = true
+      [32m+[0m[0m block_public_policy     = true
+      [32m+[0m[0m bucket                  = (known after apply)
+      [32m+[0m[0m id                      = (known after apply)
+      [32m+[0m[0m ignore_public_acls      = true
+      [32m+[0m[0m restrict_public_buckets = true
+    }
+
+[1m  # aws_s3_bucket_server_side_encryption_configuration.alb_logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs" {
+      [32m+[0m[0m bucket = (known after apply)
+      [32m+[0m[0m id     = (known after apply)
+
+      [32m+[0m[0m rule {
+          [32m+[0m[0m apply_server_side_encryption_by_default {
+              [32m+[0m[0m sse_algorithm = "AES256"
+            }
+        }
+    }
+
+[1m  # aws_s3_bucket_versioning.alb_logs[0m will be created
+[0m  [32m+[0m[0m resource "aws_s3_bucket_versioning" "alb_logs" {
+      [32m+[0m[0m bucket = (known after apply)
+      [32m+[0m[0m id     = (known after apply)
+
+      [32m+[0m[0m versioning_configuration {
+          [32m+[0m[0m mfa_delete = (known after apply)
+          [32m+[0m[0m status     = "Enabled"
+        }
+    }
+
+[1m  # aws_security_group.alb[0m will be created
+[0m  [32m+[0m[0m resource "aws_security_group" "alb" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m description            = "Public ALB security group"
+      [32m+[0m[0m egress                 = [
+          [32m+[0m[0m {
+              [32m+[0m[0m cidr_blocks      = [
+                  [32m+[0m[0m "0.0.0.0/0",
+                ]
+              [32m+[0m[0m description      = "All outbound traffic (ALB must reach targets in any private subnet on any port they listen on)"
+              [32m+[0m[0m from_port        = 0
+              [32m+[0m[0m ipv6_cidr_blocks = []
+              [32m+[0m[0m prefix_list_ids  = []
+              [32m+[0m[0m protocol         = "-1"
+              [32m+[0m[0m security_groups  = []
+              [32m+[0m[0m self             = false
+              [32m+[0m[0m to_port          = 0
+            },
+        ]
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ingress                = [
+          [32m+[0m[0m {
+              [32m+[0m[0m cidr_blocks      = [
+                  [32m+[0m[0m "0.0.0.0/0",
+                ]
+              [32m+[0m[0m description      = "HTTP from anywhere (redirects to HTTPS)"
+              [32m+[0m[0m from_port        = 80
+              [32m+[0m[0m ipv6_cidr_blocks = []
+              [32m+[0m[0m prefix_list_ids  = []
+              [32m+[0m[0m protocol         = "tcp"
+              [32m+[0m[0m security_groups  = []
+              [32m+[0m[0m self             = false
+              [32m+[0m[0m to_port          = 80
+            },
+          [32m+[0m[0m {
+              [32m+[0m[0m cidr_blocks      = [
+                  [32m+[0m[0m "0.0.0.0/0",
+                ]
+              [32m+[0m[0m description      = "HTTPS from anywhere"
+              [32m+[0m[0m from_port        = 443
+              [32m+[0m[0m ipv6_cidr_blocks = []
+              [32m+[0m[0m prefix_list_ids  = []
+              [32m+[0m[0m protocol         = "tcp"
+              [32m+[0m[0m security_groups  = []
+              [32m+[0m[0m self             = false
+              [32m+[0m[0m to_port          = 443
+            },
+        ]
+      [32m+[0m[0m name                   = "retail-multitier-alb"
+      [32m+[0m[0m name_prefix            = (known after apply)
+      [32m+[0m[0m owner_id               = (known after apply)
+      [32m+[0m[0m revoke_rules_on_delete = false
+      [32m+[0m[0m tags                   = {
+          [32m+[0m[0m "Name" = "retail-multitier-alb-sg"
+        }
+      [32m+[0m[0m tags_all               = {
+          [32m+[0m[0m "Name" = "retail-multitier-alb-sg"
+        }
+      [32m+[0m[0m vpc_id                 = (known after apply)
+    }
+
+[1m  # aws_security_group.carts_task[0m will be created
+[0m  [32m+[0m[0m resource "aws_security_group" "carts_task" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m description            = "Carts Fargate task security group"
+      [32m+[0m[0m egress                 = [
+          [32m+[0m[0m {
+              [32m+[0m[0m cidr_blocks      = [
+                  [32m+[0m[0m "0.0.0.0/0",
+                ]
+              [32m+[0m[0m description      = "All outbound traffic (image pulls, logs, and DynamoDB via VPC endpoints; no NAT Gateway in this design)"
+              [32m+[0m[0m from_port        = 0
+              [32m+[0m[0m ipv6_cidr_blocks = []
+              [32m+[0m[0m prefix_list_ids  = []
+              [32m+[0m[0m protocol         = "-1"
+              [32m+[0m[0m security_groups  = []
+              [32m+[0m[0m self             = false
+              [32m+[0m[0m to_port          = 0
+            },
+        ]
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ingress                = [
+          [32m+[0m[0m {
+              [32m+[0m[0m cidr_blocks      = []
+              [32m+[0m[0m description      = "From UI service"
+              [32m+[0m[0m from_port        = 8080
+              [32m+[0m[0m ipv6_cidr_blocks = []
+              [32m+[0m[0m prefix_list_ids  = []
+              [32m+[0m[0m protocol         = "tcp"
+              [32m+[0m[0m security_groups  = (known after apply)
+              [32m+[0m[0m self             = false
+              [32m+[0m[0m to_port          = 8080
+            },
+        ]
+      [32m+[0m[0m name                   = "retail-multitier-carts-task"
+      [32m+[0m[0m name_prefix            = (known after apply)
+      [32m+[0m[0m owner_id               = (known after apply)
+      [32m+[0m[0m revoke_rules_on_delete = false
+      [32m+[0m[0m tags                   = {
+          [32m+[0m[0m "Name" = "retail-multitier-carts-task-sg"
+        }
+      [32m+[0m[0m tags_all               = {
+          [32m+[0m[0m "Name" = "retail-multitier-carts-task-sg"
+        }
+      [32m+[0m[0m vpc_id                 = (known after apply)
+    }
+
+[1m  # aws_security_group.ui_task[0m will be created
+[0m  [32m+[0m[0m resource "aws_security_group" "ui_task" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m description            = "UI Fargate task security group"
+      [32m+[0m[0m egress                 = [
+          [32m+[0m[0m {
+              [32m+[0m[0m cidr_blocks      = [
+                  [32m+[0m[0m "0.0.0.0/0",
+                ]
+              [32m+[0m[0m description      = "All outbound traffic (image pulls, logs, and DynamoDB via VPC endpoints; no NAT Gateway in this design)"
+              [32m+[0m[0m from_port        = 0
+              [32m+[0m[0m ipv6_cidr_blocks = []
+              [32m+[0m[0m prefix_list_ids  = []
+              [32m+[0m[0m protocol         = "-1"
+              [32m+[0m[0m security_groups  = []
+              [32m+[0m[0m self             = false
+              [32m+[0m[0m to_port          = 0
+            },
+        ]
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ingress                = [
+          [32m+[0m[0m {
+              [32m+[0m[0m cidr_blocks      = []
+              [32m+[0m[0m description      = "From ALB"
+              [32m+[0m[0m from_port        = 8080
+              [32m+[0m[0m ipv6_cidr_blocks = []
+              [32m+[0m[0m prefix_list_ids  = []
+              [32m+[0m[0m protocol         = "tcp"
+              [32m+[0m[0m security_groups  = (known after apply)
+              [32m+[0m[0m self             = false
+              [32m+[0m[0m to_port          = 8080
+            },
+        ]
+      [32m+[0m[0m name                   = "retail-multitier-ui-task"
+      [32m+[0m[0m name_prefix            = (known after apply)
+      [32m+[0m[0m owner_id               = (known after apply)
+      [32m+[0m[0m revoke_rules_on_delete = false
+      [32m+[0m[0m tags                   = {
+          [32m+[0m[0m "Name" = "retail-multitier-ui-task-sg"
+        }
+      [32m+[0m[0m tags_all               = {
+          [32m+[0m[0m "Name" = "retail-multitier-ui-task-sg"
+        }
+      [32m+[0m[0m vpc_id                 = (known after apply)
+    }
+
+[1m  # aws_security_group.vpc_endpoints[0m will be created
+[0m  [32m+[0m[0m resource "aws_security_group" "vpc_endpoints" {
+      [32m+[0m[0m arn                    = (known after apply)
+      [32m+[0m[0m description            = "Allows HTTPS from within the VPC to interface endpoints"
+      [32m+[0m[0m egress                 = [
+          [32m+[0m[0m {
+              [32m+[0m[0m cidr_blocks      = [
+                  [32m+[0m[0m "0.0.0.0/0",
+                ]
+              [32m+[0m[0m description      = "All outbound traffic (interface endpoint ENIs do not require egress restriction beyond the VPC boundary)"
+              [32m+[0m[0m from_port        = 0
+              [32m+[0m[0m ipv6_cidr_blocks = []
+              [32m+[0m[0m prefix_list_ids  = []
+              [32m+[0m[0m protocol         = "-1"
+              [32m+[0m[0m security_groups  = []
+              [32m+[0m[0m self             = false
+              [32m+[0m[0m to_port          = 0
+            },
+        ]
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m ingress                = [
+          [32m+[0m[0m {
+              [32m+[0m[0m cidr_blocks      = [
+                  [32m+[0m[0m "10.20.0.0/16",
+                ]
+              [32m+[0m[0m description      = "HTTPS from VPC"
+              [32m+[0m[0m from_port        = 443
+              [32m+[0m[0m ipv6_cidr_blocks = []
+              [32m+[0m[0m prefix_list_ids  = []
+              [32m+[0m[0m protocol         = "tcp"
+              [32m+[0m[0m security_groups  = []
+              [32m+[0m[0m self             = false
+              [32m+[0m[0m to_port          = 443
+            },
+        ]
+      [32m+[0m[0m name                   = "retail-multitier-vpce"
+      [32m+[0m[0m name_prefix            = (known after apply)
+      [32m+[0m[0m owner_id               = (known after apply)
+      [32m+[0m[0m revoke_rules_on_delete = false
+      [32m+[0m[0m tags                   = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-sg"
+        }
+      [32m+[0m[0m tags_all               = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-sg"
+        }
+      [32m+[0m[0m vpc_id                 = (known after apply)
+    }
+
+[1m  # aws_service_discovery_private_dns_namespace.internal[0m will be created
+[0m  [32m+[0m[0m resource "aws_service_discovery_private_dns_namespace" "internal" {
+      [32m+[0m[0m arn         = (known after apply)
+      [32m+[0m[0m description = "Internal service discovery for retail-multitier"
+      [32m+[0m[0m hosted_zone = (known after apply)
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "retail-multitier.local"
+      [32m+[0m[0m tags_all    = (known after apply)
+      [32m+[0m[0m vpc         = (known after apply)
+    }
+
+[1m  # aws_service_discovery_service.carts[0m will be created
+[0m  [32m+[0m[0m resource "aws_service_discovery_service" "carts" {
+      [32m+[0m[0m arn           = (known after apply)
+      [32m+[0m[0m force_destroy = false
+      [32m+[0m[0m id            = (known after apply)
+      [32m+[0m[0m name          = "carts"
+      [32m+[0m[0m namespace_id  = (known after apply)
+      [32m+[0m[0m tags_all      = (known after apply)
+      [32m+[0m[0m type          = (known after apply)
+
+      [32m+[0m[0m dns_config {
+          [32m+[0m[0m namespace_id   = (known after apply)
+          [32m+[0m[0m routing_policy = "MULTIVALUE"
+
+          [32m+[0m[0m dns_records {
+              [32m+[0m[0m ttl  = 10
+              [32m+[0m[0m type = "A"
+            }
+        }
+
+      [32m+[0m[0m health_check_custom_config {
+          [32m+[0m[0m failure_threshold = 1
+        }
+    }
+
+[1m  # aws_subnet.private[0][0m will be created
+[0m  [32m+[0m[0m resource "aws_subnet" "private" {
+      [32m+[0m[0m arn                                            = (known after apply)
+      [32m+[0m[0m assign_ipv6_address_on_creation                = false
+      [32m+[0m[0m availability_zone                              = "us-east-1a"
+      [32m+[0m[0m availability_zone_id                           = (known after apply)
+      [32m+[0m[0m cidr_block                                     = "10.20.10.0/24"
+      [32m+[0m[0m enable_dns64                                   = false
+      [32m+[0m[0m enable_resource_name_dns_a_record_on_launch    = false
+      [32m+[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false
+      [32m+[0m[0m id                                             = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_association_id                 = (known after apply)
+      [32m+[0m[0m ipv6_native                                    = false
+      [32m+[0m[0m map_public_ip_on_launch                        = false
+      [32m+[0m[0m owner_id                                       = (known after apply)
+      [32m+[0m[0m private_dns_hostname_type_on_launch            = (known after apply)
+      [32m+[0m[0m tags                                           = {
+          [32m+[0m[0m "Name" = "retail-multitier-private-0"
+        }
+      [32m+[0m[0m tags_all                                       = {
+          [32m+[0m[0m "Name" = "retail-multitier-private-0"
+        }
+      [32m+[0m[0m vpc_id                                         = (known after apply)
+    }
+
+[1m  # aws_subnet.private[1][0m will be created
+[0m  [32m+[0m[0m resource "aws_subnet" "private" {
+      [32m+[0m[0m arn                                            = (known after apply)
+      [32m+[0m[0m assign_ipv6_address_on_creation                = false
+      [32m+[0m[0m availability_zone                              = "us-east-1b"
+      [32m+[0m[0m availability_zone_id                           = (known after apply)
+      [32m+[0m[0m cidr_block                                     = "10.20.11.0/24"
+      [32m+[0m[0m enable_dns64                                   = false
+      [32m+[0m[0m enable_resource_name_dns_a_record_on_launch    = false
+      [32m+[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false
+      [32m+[0m[0m id                                             = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_association_id                 = (known after apply)
+      [32m+[0m[0m ipv6_native                                    = false
+      [32m+[0m[0m map_public_ip_on_launch                        = false
+      [32m+[0m[0m owner_id                                       = (known after apply)
+      [32m+[0m[0m private_dns_hostname_type_on_launch            = (known after apply)
+      [32m+[0m[0m tags                                           = {
+          [32m+[0m[0m "Name" = "retail-multitier-private-1"
+        }
+      [32m+[0m[0m tags_all                                       = {
+          [32m+[0m[0m "Name" = "retail-multitier-private-1"
+        }
+      [32m+[0m[0m vpc_id                                         = (known after apply)
+    }
+
+[1m  # aws_subnet.public[0][0m will be created
+[0m  [32m+[0m[0m resource "aws_subnet" "public" {
+      [32m+[0m[0m arn                                            = (known after apply)
+      [32m+[0m[0m assign_ipv6_address_on_creation                = false
+      [32m+[0m[0m availability_zone                              = "us-east-1a"
+      [32m+[0m[0m availability_zone_id                           = (known after apply)
+      [32m+[0m[0m cidr_block                                     = "10.20.0.0/24"
+      [32m+[0m[0m enable_dns64                                   = false
+      [32m+[0m[0m enable_resource_name_dns_a_record_on_launch    = false
+      [32m+[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false
+      [32m+[0m[0m id                                             = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_association_id                 = (known after apply)
+      [32m+[0m[0m ipv6_native                                    = false
+      [32m+[0m[0m map_public_ip_on_launch                        = false
+      [32m+[0m[0m owner_id                                       = (known after apply)
+      [32m+[0m[0m private_dns_hostname_type_on_launch            = (known after apply)
+      [32m+[0m[0m tags                                           = {
+          [32m+[0m[0m "Name" = "retail-multitier-public-0"
+        }
+      [32m+[0m[0m tags_all                                       = {
+          [32m+[0m[0m "Name" = "retail-multitier-public-0"
+        }
+      [32m+[0m[0m vpc_id                                         = (known after apply)
+    }
+
+[1m  # aws_subnet.public[1][0m will be created
+[0m  [32m+[0m[0m resource "aws_subnet" "public" {
+      [32m+[0m[0m arn                                            = (known after apply)
+      [32m+[0m[0m assign_ipv6_address_on_creation                = false
+      [32m+[0m[0m availability_zone                              = "us-east-1b"
+      [32m+[0m[0m availability_zone_id                           = (known after apply)
+      [32m+[0m[0m cidr_block                                     = "10.20.1.0/24"
+      [32m+[0m[0m enable_dns64                                   = false
+      [32m+[0m[0m enable_resource_name_dns_a_record_on_launch    = false
+      [32m+[0m[0m enable_resource_name_dns_aaaa_record_on_launch = false
+      [32m+[0m[0m id                                             = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_association_id                 = (known after apply)
+      [32m+[0m[0m ipv6_native                                    = false
+      [32m+[0m[0m map_public_ip_on_launch                        = false
+      [32m+[0m[0m owner_id                                       = (known after apply)
+      [32m+[0m[0m private_dns_hostname_type_on_launch            = (known after apply)
+      [32m+[0m[0m tags                                           = {
+          [32m+[0m[0m "Name" = "retail-multitier-public-1"
+        }
+      [32m+[0m[0m tags_all                                       = {
+          [32m+[0m[0m "Name" = "retail-multitier-public-1"
+        }
+      [32m+[0m[0m vpc_id                                         = (known after apply)
+    }
+
+[1m  # aws_vpc.main[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc" "main" {
+      [32m+[0m[0m arn                                  = (known after apply)
+      [32m+[0m[0m cidr_block                           = "10.20.0.0/16"
+      [32m+[0m[0m default_network_acl_id               = (known after apply)
+      [32m+[0m[0m default_route_table_id               = (known after apply)
+      [32m+[0m[0m default_security_group_id            = (known after apply)
+      [32m+[0m[0m dhcp_options_id                      = (known after apply)
+      [32m+[0m[0m enable_dns_hostnames                 = true
+      [32m+[0m[0m enable_dns_support                   = true
+      [32m+[0m[0m enable_network_address_usage_metrics = (known after apply)
+      [32m+[0m[0m id                                   = (known after apply)
+      [32m+[0m[0m instance_tenancy                     = "default"
+      [32m+[0m[0m ipv6_association_id                  = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block                      = (known after apply)
+      [32m+[0m[0m ipv6_cidr_block_network_border_group = (known after apply)
+      [32m+[0m[0m main_route_table_id                  = (known after apply)
+      [32m+[0m[0m owner_id                             = (known after apply)
+      [32m+[0m[0m tags                                 = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpc"
+        }
+      [32m+[0m[0m tags_all                             = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpc"
+        }
+    }
+
+[1m  # aws_vpc_endpoint.dynamodb[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_endpoint" "dynamodb" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m cidr_blocks           = (known after apply)
+      [32m+[0m[0m dns_entry             = (known after apply)
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m ip_address_type       = (known after apply)
+      [32m+[0m[0m network_interface_ids = (known after apply)
+      [32m+[0m[0m owner_id              = (known after apply)
+      [32m+[0m[0m policy                = (known after apply)
+      [32m+[0m[0m prefix_list_id        = (known after apply)
+      [32m+[0m[0m private_dns_enabled   = (known after apply)
+      [32m+[0m[0m requester_managed     = (known after apply)
+      [32m+[0m[0m route_table_ids       = (known after apply)
+      [32m+[0m[0m security_group_ids    = (known after apply)
+      [32m+[0m[0m service_name          = "com.amazonaws.us-east-1.dynamodb"
+      [32m+[0m[0m service_region        = (known after apply)
+      [32m+[0m[0m state                 = (known after apply)
+      [32m+[0m[0m subnet_ids            = (known after apply)
+      [32m+[0m[0m tags                  = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-dynamodb"
+        }
+      [32m+[0m[0m tags_all              = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-dynamodb"
+        }
+      [32m+[0m[0m vpc_endpoint_type     = "Gateway"
+      [32m+[0m[0m vpc_id                = (known after apply)
+
+      [32m+[0m[0m dns_options (known after apply)
+
+      [32m+[0m[0m subnet_configuration (known after apply)
+    }
+
+[1m  # aws_vpc_endpoint.interface["ecr.api"][0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_endpoint" "interface" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m cidr_blocks           = (known after apply)
+      [32m+[0m[0m dns_entry             = (known after apply)
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m ip_address_type       = (known after apply)
+      [32m+[0m[0m network_interface_ids = (known after apply)
+      [32m+[0m[0m owner_id              = (known after apply)
+      [32m+[0m[0m policy                = (known after apply)
+      [32m+[0m[0m prefix_list_id        = (known after apply)
+      [32m+[0m[0m private_dns_enabled   = true
+      [32m+[0m[0m requester_managed     = (known after apply)
+      [32m+[0m[0m route_table_ids       = (known after apply)
+      [32m+[0m[0m security_group_ids    = (known after apply)
+      [32m+[0m[0m service_name          = "com.amazonaws.us-east-1.ecr.api"
+      [32m+[0m[0m service_region        = (known after apply)
+      [32m+[0m[0m state                 = (known after apply)
+      [32m+[0m[0m subnet_ids            = (known after apply)
+      [32m+[0m[0m tags                  = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-ecr.api"
+        }
+      [32m+[0m[0m tags_all              = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-ecr.api"
+        }
+      [32m+[0m[0m vpc_endpoint_type     = "Interface"
+      [32m+[0m[0m vpc_id                = (known after apply)
+
+      [32m+[0m[0m dns_options (known after apply)
+
+      [32m+[0m[0m subnet_configuration (known after apply)
+    }
+
+[1m  # aws_vpc_endpoint.interface["ecr.dkr"][0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_endpoint" "interface" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m cidr_blocks           = (known after apply)
+      [32m+[0m[0m dns_entry             = (known after apply)
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m ip_address_type       = (known after apply)
+      [32m+[0m[0m network_interface_ids = (known after apply)
+      [32m+[0m[0m owner_id              = (known after apply)
+      [32m+[0m[0m policy                = (known after apply)
+      [32m+[0m[0m prefix_list_id        = (known after apply)
+      [32m+[0m[0m private_dns_enabled   = true
+      [32m+[0m[0m requester_managed     = (known after apply)
+      [32m+[0m[0m route_table_ids       = (known after apply)
+      [32m+[0m[0m security_group_ids    = (known after apply)
+      [32m+[0m[0m service_name          = "com.amazonaws.us-east-1.ecr.dkr"
+      [32m+[0m[0m service_region        = (known after apply)
+      [32m+[0m[0m state                 = (known after apply)
+      [32m+[0m[0m subnet_ids            = (known after apply)
+      [32m+[0m[0m tags                  = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-ecr.dkr"
+        }
+      [32m+[0m[0m tags_all              = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-ecr.dkr"
+        }
+      [32m+[0m[0m vpc_endpoint_type     = "Interface"
+      [32m+[0m[0m vpc_id                = (known after apply)
+
+      [32m+[0m[0m dns_options (known after apply)
+
+      [32m+[0m[0m subnet_configuration (known after apply)
+    }
+
+[1m  # aws_vpc_endpoint.interface["logs"][0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_endpoint" "interface" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m cidr_blocks           = (known after apply)
+      [32m+[0m[0m dns_entry             = (known after apply)
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m ip_address_type       = (known after apply)
+      [32m+[0m[0m network_interface_ids = (known after apply)
+      [32m+[0m[0m owner_id              = (known after apply)
+      [32m+[0m[0m policy                = (known after apply)
+      [32m+[0m[0m prefix_list_id        = (known after apply)
+      [32m+[0m[0m private_dns_enabled   = true
+      [32m+[0m[0m requester_managed     = (known after apply)
+      [32m+[0m[0m route_table_ids       = (known after apply)
+      [32m+[0m[0m security_group_ids    = (known after apply)
+      [32m+[0m[0m service_name          = "com.amazonaws.us-east-1.logs"
+      [32m+[0m[0m service_region        = (known after apply)
+      [32m+[0m[0m state                 = (known after apply)
+      [32m+[0m[0m subnet_ids            = (known after apply)
+      [32m+[0m[0m tags                  = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-logs"
+        }
+      [32m+[0m[0m tags_all              = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-logs"
+        }
+      [32m+[0m[0m vpc_endpoint_type     = "Interface"
+      [32m+[0m[0m vpc_id                = (known after apply)
+
+      [32m+[0m[0m dns_options (known after apply)
+
+      [32m+[0m[0m subnet_configuration (known after apply)
+    }
+
+[1m  # aws_vpc_endpoint.s3[0m will be created
+[0m  [32m+[0m[0m resource "aws_vpc_endpoint" "s3" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m cidr_blocks           = (known after apply)
+      [32m+[0m[0m dns_entry             = (known after apply)
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m ip_address_type       = (known after apply)
+      [32m+[0m[0m network_interface_ids = (known after apply)
+      [32m+[0m[0m owner_id              = (known after apply)
+      [32m+[0m[0m policy                = (known after apply)
+      [32m+[0m[0m prefix_list_id        = (known after apply)
+      [32m+[0m[0m private_dns_enabled   = (known after apply)
+      [32m+[0m[0m requester_managed     = (known after apply)
+      [32m+[0m[0m route_table_ids       = (known after apply)
+      [32m+[0m[0m security_group_ids    = (known after apply)
+      [32m+[0m[0m service_name          = "com.amazonaws.us-east-1.s3"
+      [32m+[0m[0m service_region        = (known after apply)
+      [32m+[0m[0m state                 = (known after apply)
+      [32m+[0m[0m subnet_ids            = (known after apply)
+      [32m+[0m[0m tags                  = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-s3"
+        }
+      [32m+[0m[0m tags_all              = {
+          [32m+[0m[0m "Name" = "retail-multitier-vpce-s3"
+        }
+      [32m+[0m[0m vpc_endpoint_type     = "Gateway"
+      [32m+[0m[0m vpc_id                = (known after apply)
+
+      [32m+[0m[0m dns_options (known after apply)
+
+      [32m+[0m[0m subnet_configuration (known after apply)
+    }
+
+[1m  # aws_wafv2_web_acl.alb[0m will be created
+[0m  [32m+[0m[0m resource "aws_wafv2_web_acl" "alb" {
+      [32m+[0m[0m application_integration_url = (known after apply)
+      [32m+[0m[0m arn                         = (known after apply)
+      [32m+[0m[0m capacity                    = (known after apply)
+      [32m+[0m[0m description                 = "Baseline managed protection for the public ALB"
+      [32m+[0m[0m id                          = (known after apply)
+      [32m+[0m[0m lock_token                  = (known after apply)
+      [32m+[0m[0m name                        = "retail-multitier-alb-waf"
+      [32m+[0m[0m name_prefix                 = (known after apply)
+      [32m+[0m[0m scope                       = "REGIONAL"
+      [32m+[0m[0m tags                        = {
+          [32m+[0m[0m "Name" = "retail-multitier-alb-waf"
+        }
+      [32m+[0m[0m tags_all                    = {
+          [32m+[0m[0m "Name" = "retail-multitier-alb-waf"
+        }
+
+      [32m+[0m[0m default_action {
+          [32m+[0m[0m allow {
+            }
+        }
+
+      [32m+[0m[0m rule {
+          [32m+[0m[0m name     = "AWSManagedRulesCommonRuleSet"
+          [32m+[0m[0m priority = 1
+
+          [32m+[0m[0m override_action {
+              [32m+[0m[0m none {}
+            }
+
+          [32m+[0m[0m statement {
+              [32m+[0m[0m managed_rule_group_statement {
+                  [32m+[0m[0m name        = "AWSManagedRulesCommonRuleSet"
+                  [32m+[0m[0m vendor_name = "AWS"
+                }
+            }
+
+          [32m+[0m[0m visibility_config {
+              [32m+[0m[0m cloudwatch_metrics_enabled = true
+              [32m+[0m[0m metric_name                = "retail-multitier-common-rules"
+              [32m+[0m[0m sampled_requests_enabled   = true
+            }
+        }
+      [32m+[0m[0m rule {
+          [32m+[0m[0m name     = "AWSManagedRulesKnownBadInputsRuleSet"
+          [32m+[0m[0m priority = 2
+
+          [32m+[0m[0m override_action {
+              [32m+[0m[0m none {}
+            }
+
+          [32m+[0m[0m statement {
+              [32m+[0m[0m managed_rule_group_statement {
+                  [32m+[0m[0m name        = "AWSManagedRulesKnownBadInputsRuleSet"
+                  [32m+[0m[0m vendor_name = "AWS"
+                }
+            }
+
+          [32m+[0m[0m visibility_config {
+              [32m+[0m[0m cloudwatch_metrics_enabled = true
+              [32m+[0m[0m metric_name                = "retail-multitier-known-bad-inputs"
+              [32m+[0m[0m sampled_requests_enabled   = true
+            }
+        }
+
+      [32m+[0m[0m visibility_config {
+          [32m+[0m[0m cloudwatch_metrics_enabled = true
+          [32m+[0m[0m metric_name                = "retail-multitier-alb-waf"
+          [32m+[0m[0m sampled_requests_enabled   = true
+        }
+    }
+
+[1m  # aws_wafv2_web_acl_association.alb[0m will be created
+[0m  [32m+[0m[0m resource "aws_wafv2_web_acl_association" "alb" {
+      [32m+[0m[0m id           = (known after apply)
+      [32m+[0m[0m resource_arn = (known after apply)
+      [32m+[0m[0m web_acl_arn  = (known after apply)
+    }
+
+[1m  # aws_wafv2_web_acl_logging_configuration.alb[0m will be created
+[0m  [32m+[0m[0m resource "aws_wafv2_web_acl_logging_configuration" "alb" {
+      [32m+[0m[0m id                      = (known after apply)
+      [32m+[0m[0m log_destination_configs = (known after apply)
+      [32m+[0m[0m resource_arn            = (known after apply)
+    }
+
+[1mPlan:[0m 60 to add, 0 to change, 0 to destroy.
+[0m
+Changes to Outputs:
+  [32m+[0m[0m alb_dns_name     = (known after apply)
+  [32m+[0m[0m carts_table_name = "retail-multitier-carts"
+  [32m+[0m[0m ecs_cluster_name = "retail-multitier-cluster"
+  [32m+[0m[0m site_url         = "https://retail-multitier.nishacloudprojects.click"
+  [32m+[0m[0m vpc_id           = (known after apply)
+[90m
+─────────────────────────────────────────────────────────────────────────────[0m
+
+Note: You didn't use the -out option to save this plan, so OpenTofu can't
+guarantee to take exactly these actions if you run "tofu apply" now.

@@ -147,9 +147,11 @@ Reference: AWS Prescriptive Guidance, [Enabling data persistence in microservice
 
 ### Verifying during first deploy
 
-1. **S3 gateway endpoint requirement**: confirm whether ECR image pulls actually require the S3 gateway endpoint in addition to the ECR DKR interface endpoint, or whether DKR alone is sufficient in current ECR architecture.
+1. **UI service catalog dependency behavior**: confirm what the UI actually does when Catalog is unreachable (error page vs. partial render).
 
-2. **UI service catalog dependency behavior**: confirm what the UI actually does when Catalog is unreachable (error page vs. partial render).
+### Confirmed the hard way, during first deploy
+
+1. **Public ECR requires its own dedicated VPC endpoint, separate from private ECR.** First `tofu apply` succeeded, but both ECS services stayed at 0 running tasks indefinitely. ECS service Events showed `CannotPullContainerError: ... failed to resolve ref public.ecr.aws/... dial tcp ...: i/o timeout`. Root cause: the `ecr.api` / `ecr.dkr` interface endpoints only provide private connectivity to *private* ECR repositories in this account. They do not cover `public.ecr.aws` (Amazon ECR Public Gallery) at all, which is what both container images in this project actually pull from. AWS's own documentation confirms Public ECR is reachable via VPC endpoint only through a separate `ecr-public` service endpoint, and only in `us-east-1`. Fixed by adding a dedicated `aws_vpc_endpoint.ecr_public` resource (see `endpoints.tf`), with a `precondition` that fails cleanly at plan time if this project is ever deployed outside `us-east-1`, rather than surfacing as a confusing runtime timeout in a different region. This resolves what the original item 1 in this list ("S3 gateway endpoint requirement") was circling without naming precisely: the real gap wasn't S3, it was that Public ECR was never reachable through the private-ECR endpoints in the first place.
 
 ## Cost profile (Phase 1, approximate, us-east-1)
 
@@ -158,3 +160,19 @@ Reference: AWS Prescriptive Guidance, [Enabling data persistence in microservice
 - Fargate (2 services, minimal task size, not running 24/7): pennies per hour while active
 - DynamoDB PAY_PER_REQUEST: near zero at this usage scale
 - VPC interface endpoints: hourly charge per endpoint per AZ, about $7 to $8 per month each. VPC endpoints are not automatically cheaper than a single NAT Gateway at low service counts; the economics shift as more services and endpoints are added in later phases.
+
+## Deployment evidence
+
+📸 **Screenshot:** ECS console, `ui` and `carts` services both showing healthy task counts
+
+📸 **Screenshot:** VPC resource map, showing the actual subnet/route table/endpoint layout matching the architecture diagram above
+
+📸 **Screenshot:** WAFv2 web ACL, both managed rule groups attached (and sampled request metrics, once there's been some traffic)
+
+📸 **Screenshot:** CloudWatch Logs, `/ecs/retail-multitier` log group showing real application logs, KMS-encrypted (lock icon visible in console)
+
+📸 **Screenshot:** Route 53 hosted zone after apply, showing the new cert-validation CNAME and the ALB alias A record that Terraform created automatically
+
+📸 **Screenshot:** GitHub Actions, the final green pipeline run, paired with an earlier failing run for the "broken pipeline → root-caused → fixed" arc
+
+📸 **Screenshot:** Cost Explorer, a day or two after deployment, actual per-service cost breakdown to compare against the estimates above
