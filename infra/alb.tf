@@ -31,6 +31,12 @@ resource "aws_s3_bucket_public_access_block" "alb_logs" {
 resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs" {
   bucket = aws_s3_bucket.alb_logs.id
 
+  # AES256 (SSE-S3), not SSE-KMS, is intentional and required here. ALB
+  # access log delivery only supports SSE-S3 on the destination bucket;
+  # SSE-KMS is not supported for this specific feature (unlike, for
+  # example, Network Load Balancer access logs, which do support KMS).
+  # Using KMS here would satisfy a static scanner while silently breaking
+  # real log delivery. See CKV_AWS_145 in .checkovignore.
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -43,6 +49,28 @@ resource "aws_s3_bucket_versioning" "alb_logs" {
 
   versioning_configuration {
     status = "Enabled"
+  }
+}
+
+# 90-day retention keeps this bounded for a personal project rather than
+# accumulating access logs indefinitely. Older noncurrent versions expire
+# sooner, since only the most recent version of any log object matters.
+resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  rule {
+    id     = "expire-old-logs"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 90
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
   }
 }
 

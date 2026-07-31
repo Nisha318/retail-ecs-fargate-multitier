@@ -25,7 +25,7 @@ jobs:
           # this action does not reliably pick up .checkovignore from the
           # scanned directory. See infra/.checkovignore for the documented
           # justification behind each of these.
-          skip_check: CKV_AWS_382,CKV_AWS_119,CKV_AWS_150,CKV_AWS_260,CKV_AWS_18,CKV2_AWS_62,CKV_AWS_144
+          skip_check: CKV_AWS_382,CKV_AWS_119,CKV_AWS_150,CKV_AWS_260,CKV_AWS_18,CKV2_AWS_62,CKV_AWS_144,CKV_AWS_145
 
   gitleaks:
     runs-on: ubuntu-latest

@@ -8,7 +8,9 @@ resource "aws_kms_key" "logs" {
   # CloudWatch Logs requires an explicit grant in the key policy to use a
   # customer-managed key. Without this statement, log group creation fails
   # with an access-denied error even though the account root has full KMS
-  # access by default.
+  # access by default. The ArnLike condition lists every log group this key
+  # protects; add to this list rather than creating a second key whenever a
+  # new encrypted log group is introduced.
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -35,7 +37,11 @@ resource "aws_kms_key" "logs" {
         Resource = "*"
         Condition = {
           ArnLike = {
-            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${var.project_name}"
+            "kms:EncryptionContext:aws:logs:arn" = [
+              "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${var.project_name}",
+              "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/vpc/flow/${var.project_name}",
+              "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-${var.project_name}"
+            ]
           }
         }
       }

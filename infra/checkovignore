@@ -54,3 +54,14 @@ CKV2_AWS_62
 # second bucket in another region plus a replication IAM role and config
 # is production-grade disaster-recovery tooling with no matching need here.
 CKV_AWS_144
+
+# CKV_AWS_145: the ALB logs bucket is encrypted with AES256 (SSE-S3), not
+# a customer-managed KMS key. This is a hard AWS platform limitation, not
+# a design choice: ALB access log delivery to S3 only supports SSE-S3.
+# SSE-KMS is not supported for this specific feature (Network Load
+# Balancer access logs do support KMS; Application Load Balancer access
+# logs do not). Verified directly against AWS documentation and multiple
+# corroborating sources before accepting this finding, since using KMS
+# here would pass this static check while silently breaking real log
+# delivery.
+CKV_AWS_145
