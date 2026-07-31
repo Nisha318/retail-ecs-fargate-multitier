@@ -1,0 +1,37 @@
+# Findings accepted with documented justification, not fixed in code.
+# Paired with docs/architecture.md, which explains the reasoning for anyone
+# reviewing this repo. Enforcement of skips happens via skip_check in
+# .github/workflows/pipeline.yml; this file exists for documentation and
+# for local `checkov` runs to match CI behavior.
+
+# CKV_AWS_382: security group egress to 0.0.0.0/0 on all ports.
+# All three task/endpoint security groups in this project allow broad
+# egress. Justification: outbound is already fully accounted for by this
+# project's networking design (VPC endpoints only, no NAT Gateway), so the
+# actual reachable destinations are already tightly scoped by that design
+# rather than by security group egress rules. Tightening egress further
+# would duplicate that control without adding real protection here.
+CKV_AWS_382
+
+# CKV_AWS_119: DynamoDB not encrypted with a customer-managed KMS key.
+# The Carts table uses AWS's default (AWS-owned key) encryption at rest,
+# which is enabled unconditionally and requires no configuration. A
+# customer-managed key would add a recurring KMS cost and key-rotation
+# management overhead with no meaningful security benefit for this
+# project's threat model. Revisit if this project ever handles data
+# requiring customer-managed key control (e.g., a compliance requirement).
+CKV_AWS_119
+
+# CKV_AWS_150: ALB deletion protection disabled.
+# Intentional. This is a personal learning project meant to be torn down
+# between sessions to control cost, not a production deployment. See
+# alb.tf for the same note inline. A production version of this
+# infrastructure would enable this.
+CKV_AWS_150
+
+# CKV_AWS_260: security group allows ingress from 0.0.0.0/0 on port 80.
+# Intentional and required. The ALB must accept HTTP from the public
+# internet in order to redirect it to HTTPS (see the http_redirect
+# listener in alb.tf). There is no way to restrict this CIDR block for a
+# public-facing load balancer without breaking that redirect behavior.
+CKV_AWS_260

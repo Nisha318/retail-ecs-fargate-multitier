@@ -22,6 +22,10 @@ resource "aws_dynamodb_table" "carts" {
     projection_type = "ALL"
   }
 
+  point_in_time_recovery {
+    enabled = true
+  }
+
   tags = {
     Name = "${var.project_name}-carts"
   }

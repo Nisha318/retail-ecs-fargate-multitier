@@ -25,6 +25,7 @@ resource "aws_security_group" "ui_task" {
   }
 
   egress {
+    description = "All outbound traffic (image pulls, logs, and DynamoDB via VPC endpoints; no NAT Gateway in this design)"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -50,6 +51,7 @@ resource "aws_security_group" "carts_task" {
   }
 
   egress {
+    description = "All outbound traffic (image pulls, logs, and DynamoDB via VPC endpoints; no NAT Gateway in this design)"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

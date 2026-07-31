@@ -21,7 +21,11 @@ jobs:
         with:
           directory: infra
           quiet: true
-          skip_check: ""
+          # Enforcement happens here, not just in infra/.checkovignore, since
+          # this action does not reliably pick up .checkovignore from the
+          # scanned directory. See infra/.checkovignore for the documented
+          # justification behind each of these.
+          skip_check: CKV_AWS_382,CKV_AWS_119,CKV_AWS_150,CKV_AWS_260
 
   gitleaks:
     runs-on: ubuntu-latest
@@ -32,6 +36,13 @@ jobs:
 
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v3
+        env:
+          # Required so gitleaks-action can authenticate its account-type
+          # check (personal vs. organization) against the GitHub API.
+          # Without this, the check hits the anonymous rate limit and falls
+          # back to warning about a missing license, even though personal
+          # accounts do not require one.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   trivy-images:
     runs-on: ubuntu-latest
@@ -39,10 +50,12 @@ jobs:
       matrix:
         image:
           - "public.ecr.aws/aws-containers/retail-store-sample-ui:1.2.4"
-          - "public.ecr.aws/aws-containers/retail-store-sample-carts:1.2.4"
+          - "public.ecr.aws/aws-containers/retail-store-sample-cart:1.2.4"
     steps:
       - name: Run Trivy on ${{ matrix.image }}
-        uses: aquasecurity/trivy-action@0.36.0
+        # v-prefixed tag required since the post-incident retag; see
+        # docs/architecture.md and this project's supply-chain notes.
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ matrix.image }}
           severity: 'HIGH,CRITICAL'
