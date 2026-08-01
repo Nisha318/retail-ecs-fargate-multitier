@@ -21,6 +21,7 @@ flowchart TB
         subgraph Private["Private Subnets (2 AZs)"]
             UI["ECS Fargate: UI Service"]
             Carts["ECS Fargate: Carts Service"]
+            SD["Service Discovery<br/>carts.retail-multitier.local"]
 
             subgraph Endpoints["VPC Endpoints (replace NAT Gateway)"]
                 EcrApi["ecr.api"]
@@ -30,19 +31,18 @@ flowchart TB
                 DdbEp["dynamodb (gateway)"]
             end
         end
-
-        SD["Service Discovery<br/>carts.retail-multitier.local"]
     end
 
     DDB[(DynamoDB<br/>carts table)]
     CW[(CloudWatch Logs)]
-    ECR[(Amazon ECR Public)]
+    ECR[(Private ECR<br/>this account)]
 
     R53 -.->|alias record| ALB
     User -->|HTTPS :443| ALB
     ALB -->|:8080| UI
-    UI -->|http://carts.retail-multitier.local| SD
-    SD --> Carts
+    UI -.->|resolves via| SD
+    SD -.->|DNS answer| Carts
+    UI -->|:8080, direct connection| Carts
     Carts -->|via dynamodb gateway endpoint| DDB
     UI -.->|via ecr endpoints, image pull| ECR
     Carts -.->|via ecr endpoints, image pull| ECR
@@ -70,7 +70,7 @@ flowchart TB
     style Internet fill:none,stroke:none
 ```
 
-Solid arrows are application traffic. Dashed arrows are infrastructure and control plane traffic (image pulls, log shipping, DNS) routed through VPC endpoints instead of a NAT Gateway. This diagram reflects Phase 1 only. See `docs/architecture.md` for the full five-service target architecture.
+Solid arrows are application traffic. Dashed arrows are infrastructure and control plane traffic (image pulls, log shipping, DNS) routed through VPC endpoints instead of a NAT Gateway. Task definitions pull from a private ECR mirror in this account, not directly from `public.ecr.aws` (see `scripts/mirror-images.sh` and `docs/architecture.md` for why). This diagram reflects Phase 1 only. See `docs/architecture.md` for the full five-service target architecture.
 
 ## Why this project exists
 
@@ -99,9 +99,38 @@ See `docs/architecture.md` for the full design breakdown, including the data sto
 ## Repo structure
 
 ```
-infra/       OpenTofu configuration (flat structure, single environment)
-docs/        Architecture notes, diagrams, and phase planning
-.github/     CI pipeline (Trivy, Checkov, Gitleaks)
+retail-ecs-fargate-multitier/
+├── infra/                        OpenTofu configuration (flat structure, single environment)
+│   ├── alb.tf
+│   ├── dns.tf
+│   ├── dynamodb.tf
+│   ├── ecr.tf
+│   ├── ecs-carts.tf
+│   ├── ecs-cluster.tf
+│   ├── ecs-ui.tf
+│   ├── endpoints.tf
+│   ├── github-oidc.tf
+│   ├── iam.tf
+│   ├── logs.tf
+│   ├── outputs.tf
+│   ├── providers.tf
+│   ├── securitygroups.tf
+│   ├── variables.tf
+│   ├── vpc.tf
+│   ├── waf.tf
+│   ├── .checkovignore           Documented, justified Checkov exceptions
+│   └── terraform.tfvars.example
+├── scripts/
+│   └── mirror-images.sh          One-time public->private ECR image mirroring
+├── docs/
+│   ├── architecture.md           Design decisions, diagram, verification log
+│   └── images/
+│       └── phase1/               Deployment evidence screenshots
+├── .github/
+│   └── workflows/
+│       └── pipeline.yml          CI: Checkov, Gitleaks, Trivy (OIDC-authenticated)
+├── .gitignore
+└── README.md
 ```
 
 ## Prerequisites
@@ -125,6 +154,23 @@ Review the plan output fully before applying anything.
 ```bash
 tofu apply
 ```
+
+**Then, before the ECS services can successfully start:** this project pulls two images from `public.ecr.aws`, which is not reliably reachable from a private subnet with no NAT Gateway (confirmed the hard way, see `docs/architecture.md`). The task definitions pull from private ECR mirrors instead, which must be populated once:
+
+```bash
+./scripts/mirror-images.sh
+```
+
+If the ECS services are already running and stuck retrying a failed pull, the script's final output includes the two commands to force a fresh deployment so they pick up the now-available images immediately.
+
+## Deployed
+
+![tofu apply completion output showing resources added and outputs block](docs/images/phase1/tofu-apply-complete.png)
+
+![Live site at retail-multitier.nishacloudprojects.click with valid TLS cert](docs/images/phase1/live-site.png)
+
+![A cart item added in the UI, confirmed present in the DynamoDB table via AWS console](docs/images/phase1/cart-item-dynamodb-1.png)
+![A cart item added in the UI, confirmed present in the DynamoDB table via AWS console](docs/images/phase1/cart-item-dynamodb-2.png)
 
 ## Status
 

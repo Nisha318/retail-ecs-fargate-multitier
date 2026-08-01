@@ -24,6 +24,7 @@ flowchart TB
         subgraph Private["Private Subnets (2 AZs)"]
             UI["ECS Fargate: UI Service"]
             Carts["ECS Fargate: Carts Service"]
+            SD["Service Discovery<br/>carts.retail-multitier.local"]
 
             subgraph Endpoints["VPC Endpoints (replace NAT Gateway)"]
                 EcrApi["ecr.api"]
@@ -33,19 +34,18 @@ flowchart TB
                 DdbEp["dynamodb (gateway)"]
             end
         end
-
-        SD["Service Discovery<br/>carts.retail-multitier.local"]
     end
 
     DDB[(DynamoDB<br/>carts table)]
     CW[(CloudWatch Logs)]
-    ECR[(Amazon ECR Public)]
+    ECR[(Private ECR<br/>this account)]
 
     R53 -.->|alias record| ALB
     User -->|HTTPS :443| ALB
     ALB -->|:8080| UI
-    UI -->|http://carts.retail-multitier.local| SD
-    SD --> Carts
+    UI -.->|resolves via| SD
+    SD -.->|DNS answer| Carts
+    UI -->|:8080, direct connection| Carts
     Carts -->|via dynamodb gateway endpoint| DDB
     UI -.->|via ecr endpoints, image pull| ECR
     Carts -.->|via ecr endpoints, image pull| ECR
@@ -73,14 +73,14 @@ flowchart TB
     style Internet fill:none,stroke:none
 ```
 
-Solid arrows are application traffic. Dashed arrows are infrastructure and control plane traffic (image pulls, log shipping) that would normally require a NAT Gateway but is routed through VPC endpoints instead in this build.
+Solid arrows are application traffic. Dashed arrows are infrastructure and control plane traffic (image pulls, log shipping) that would normally require a NAT Gateway but is routed through VPC endpoints instead in this build. Task definitions pull from a private ECR mirror in this account, not directly from `public.ecr.aws`; see the Decisions and Verification Log for why.
 
 ## Services in scope
 
-**UI**: public.ecr.aws/aws-containers/retail-store-sample-ui
+**UI**: mirrored from public.ecr.aws/aws-containers/retail-store-sample-ui into a private ECR repository (`ecr.tf`), which is what the running task definition actually pulls from
 Frontend service. Routes to Catalog and Carts in the full app. In Phase 1, with Catalog not yet deployed, catalog-dependent pages will not resolve correctly. This is expected Phase 1 behavior, resolved in Phase 2.
 
-**Carts**: public.ecr.aws/aws-containers/retail-store-sample-cart (confirmed singular repository name via `docker pull`)
+**Carts**: mirrored from public.ecr.aws/aws-containers/retail-store-sample-cart (confirmed singular repository name via `docker pull`) into a private ECR repository, same as UI
 Supports either MongoDB or DynamoDB as a persistence backend. This build uses DynamoDB.
 
 ## Networking decision: VPC endpoints instead of NAT Gateway
@@ -151,7 +151,13 @@ Reference: AWS Prescriptive Guidance, [Enabling data persistence in microservice
 
 ### Confirmed the hard way, during first deploy
 
-1. **Public ECR requires its own dedicated VPC endpoint, separate from private ECR.** First `tofu apply` succeeded, but both ECS services stayed at 0 running tasks indefinitely. ECS service Events showed `CannotPullContainerError: ... failed to resolve ref public.ecr.aws/... dial tcp ...: i/o timeout`. Root cause: the `ecr.api` / `ecr.dkr` interface endpoints only provide private connectivity to *private* ECR repositories in this account. They do not cover `public.ecr.aws` (Amazon ECR Public Gallery) at all, which is what both container images in this project actually pull from. AWS's own documentation confirms Public ECR is reachable via VPC endpoint only through a separate `ecr-public` service endpoint, and only in `us-east-1`. Fixed by adding a dedicated `aws_vpc_endpoint.ecr_public` resource (see `endpoints.tf`), with a `precondition` that fails cleanly at plan time if this project is ever deployed outside `us-east-1`, rather than surfacing as a confusing runtime timeout in a different region. This resolves what the original item 1 in this list ("S3 gateway endpoint requirement") was circling without naming precisely: the real gap wasn't S3, it was that Public ECR was never reachable through the private-ECR endpoints in the first place.
+1. **Public ECR requires its own dedicated VPC endpoint, separate from private ECR - but even that endpoint did not fully solve the problem.** First `tofu apply` succeeded, but both ECS services stayed at 0 running tasks indefinitely. ECS service Events showed `CannotPullContainerError: ... failed to resolve ref public.ecr.aws/... dial tcp ...: i/o timeout`. Root cause: the `ecr.api` / `ecr.dkr` interface endpoints only provide private connectivity to *private* ECR repositories in this account. They do not cover `public.ecr.aws` (Amazon ECR Public Gallery) at all, which is what both container images in this project actually pull from.
+
+   First attempted fix: a dedicated `aws_vpc_endpoint.ecr_public` resource targeting `com.amazonaws.us-east-1.ecr-public.api` (only available in `us-east-1`; the exact service name required a `.api` suffix not obvious from documentation alone and had to be confirmed directly via `aws ec2 describe-vpc-endpoint-services`, since an initial guess at the name failed with `InvalidServiceName`). After correcting the name and re-applying, the identical error persisted, same hostname (`public.ecr.aws`), same timeout. The reason: this endpoint's private DNS names (`api.ecr-public.us-east-1.amazonaws.com`, `ecr-public.us-east-1.api.aws`) cover API/metadata calls to the ECR Public control plane, not the actual image manifest/layer pull path, which resolves `public.ecr.aws` directly and is a different hostname entirely.
+
+   **Actual fix:** stopped trying to make `public.ecr.aws` reachable, and removed the dependency on it instead. Both images are now mirrored into private ECR repositories in this account (`ecr.tf`), populated by a one-time script (`scripts/mirror-images.sh`), with the ECS task definitions pulling from the private mirror rather than the public gallery. This routes through the `ecr.api`/`ecr.dkr` endpoints already proven to work correctly elsewhere in this project, and is independently a reasonable supply-chain hardening step: task definitions now depend on a registry under this account's control, at a specific immutable tag, rather than on the public gallery's continued availability at deploy time.
+
+   The `aws_vpc_endpoint.ecr_public` resource was left in place rather than removed, since it does provide genuine value for any future API-level calls to Public ECR (metadata lookups, `aws ecr-public describe-images`, etc. run from within the VPC), even though it does not cover image pulls.
 
 ## Cost profile (Phase 1, approximate, us-east-1)
 
@@ -163,16 +169,14 @@ Reference: AWS Prescriptive Guidance, [Enabling data persistence in microservice
 
 ## Deployment evidence
 
-📸 **Screenshot:** ECS console, `ui` and `carts` services both showing healthy task counts
+![ECS console showing ui and carts services both healthy](images/phase1/ecs-services-healthy.png)
 
-📸 **Screenshot:** VPC resource map, showing the actual subnet/route table/endpoint layout matching the architecture diagram above
+![VPC resource map showing subnets, route tables, and endpoints](images/phase1/vpc-resource-map.png)
 
-📸 **Screenshot:** WAFv2 web ACL, both managed rule groups attached (and sampled request metrics, once there's been some traffic)
+![WAFv2 web ACL with both managed rule groups attached](images/phase1/waf-managed-rules.png)
 
-📸 **Screenshot:** CloudWatch Logs, `/ecs/retail-multitier` log group showing real application logs, KMS-encrypted (lock icon visible in console)
+![CloudWatch Logs showing real application logs, KMS-encrypted](images/phase1/cloudwatch-logs.png)
 
-📸 **Screenshot:** Route 53 hosted zone after apply, showing the new cert-validation CNAME and the ALB alias A record that Terraform created automatically
+![Route 53 hosted zone after apply, showing cert-validation CNAME and ALB alias record](images/phase1/route53-records.png)
 
-📸 **Screenshot:** GitHub Actions, the final green pipeline run, paired with an earlier failing run for the "broken pipeline → root-caused → fixed" arc
-
-📸 **Screenshot:** Cost Explorer, a day or two after deployment, actual per-service cost breakdown to compare against the estimates above
+![GitHub Actions final green pipeline run](images/phase1/github-actions-green.png)

@@ -24,6 +24,13 @@ resource "aws_ecr_repository" "ui" {
   name                 = "${var.project_name}/retail-store-sample-ui"
   image_tag_mutability = "IMMUTABLE"
 
+  # This is a personal learning project meant to be torn down between
+  # sessions, not a production registry. Without this, `tofu destroy`
+  # fails outright whenever the mirror script has pushed an image, since
+  # ECR refuses to delete a non-empty repository by default. A production
+  # version of this infrastructure would leave this false.
+  force_delete = true
+
   image_scanning_configuration {
     scan_on_push = true
   }
@@ -40,6 +47,9 @@ resource "aws_ecr_repository" "ui" {
 resource "aws_ecr_repository" "cart" {
   name                 = "${var.project_name}/retail-store-sample-cart"
   image_tag_mutability = "IMMUTABLE"
+
+  # See aws_ecr_repository.ui for why this is intentionally true here.
+  force_delete = true
 
   image_scanning_configuration {
     scan_on_push = true

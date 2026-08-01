@@ -46,17 +46,43 @@ jobs:
 
   trivy-images:
     runs-on: ubuntu-latest
+    # Required for OIDC-based AWS authentication (no static access keys
+    # stored as GitHub secrets).
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       matrix:
-        image:
-          - "public.ecr.aws/aws-containers/retail-store-sample-ui:1.2.4"
-          - "public.ecr.aws/aws-containers/retail-store-sample-cart:1.2.4"
+        repo:
+          - retail-multitier/retail-store-sample-ui
+          - retail-multitier/retail-store-sample-cart
     steps:
-      - name: Run Trivy on ${{ matrix.image }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # Role ARN lives in a GitHub Actions secret, never in this
+          # committed file. Set it once under Settings > Secrets and
+          # variables > Actions > New repository secret, name
+          # AWS_ROLE_ARN, value from `tofu output github_actions_ecr_role_arn`.
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Log in to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Scans the actual private ECR mirror this project deploys from
+      # (see infra/ecr.tf, scripts/mirror-images.sh), not the
+      # public.ecr.aws source images. Scanning the source registry would
+      # have been functionally near-identical (same image digest at
+      # mirror time) but confusing to anyone reading this pipeline
+      # alongside the ECS task definitions, which reference this private
+      # registry, not the public one.
+      - name: Run Trivy on ${{ matrix.repo }}
         # v-prefixed tag required since the post-incident retag; see
         # docs/architecture.md and this project's supply-chain notes.
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ matrix.image }}
+          image-ref: "${{ steps.ecr-login.outputs.registry }}/${{ matrix.repo }}:1.2.4"
           severity: 'HIGH,CRITICAL'
           exit-code: '0'
