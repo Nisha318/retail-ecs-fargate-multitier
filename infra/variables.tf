@@ -29,15 +29,21 @@ variable "private_subnet_cidrs" {
 }
 
 variable "ui_image" {
-  description = "Container image for the UI service"
+  description = "SOURCE image for the UI service - public.ecr.aws, confirmed pullable via docker pull. This is used as the reference for scripts/mirror-images.sh, NOT as the image the ECS task definition actually pulls from. See ecr.tf and image_tag: the task definition pulls from the private ECR mirror instead, since public.ecr.aws is not reliably reachable from a private subnet with no NAT Gateway."
   type        = string
   default     = "public.ecr.aws/aws-containers/retail-store-sample-ui:1.2.4"
 }
 
 variable "carts_image" {
-  description = "Container image for the Carts service. Repository name confirmed via gallery.ecr.aws/aws-containers/retail-store-sample-cart (singular - the older ECS Immersion Day workshop used the now-outdated plural 'retail-store-sample-carts'). Tag not yet confirmed as current/valid - check `docker pull` or `aws ecr-public describe-images` before first apply."
+  description = "SOURCE image for the Carts service - public.ecr.aws, confirmed pullable via docker pull. Repository name confirmed via gallery.ecr.aws/aws-containers/retail-store-sample-cart (singular - the older ECS Immersion Day workshop used the now-outdated plural 'retail-store-sample-carts'). This is used as the reference for scripts/mirror-images.sh, NOT as the image the ECS task definition actually pulls from. See ecr.tf and image_tag."
   type        = string
   default     = "public.ecr.aws/aws-containers/retail-store-sample-cart:1.2.4"
+}
+
+variable "image_tag" {
+  description = "Tag used both for the source pull (from public.ecr.aws, must match the tag in ui_image/carts_image) and for the mirrored image pushed into this project's private ECR repos. Kept as a single shared variable so the two stay in sync deliberately rather than by convention."
+  type        = string
+  default     = "1.2.4"
 }
 
 variable "ui_container_port" {

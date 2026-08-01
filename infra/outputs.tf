@@ -19,3 +19,8 @@ output "carts_table_name" {
 output "vpc_id" {
   value = aws_vpc.main.id
 }
+
+output "github_actions_ecr_role_arn" {
+  description = "Role ARN for the CI pipeline to configure in .github/workflows/pipeline.yml"
+  value       = aws_iam_role.github_actions_ecr.arn
+}

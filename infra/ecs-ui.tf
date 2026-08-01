@@ -15,7 +15,9 @@ resource "aws_ecs_task_definition" "ui" {
   container_definitions = jsonencode([
     {
       name      = "ui"
-      image     = var.ui_image
+      # Pulls from this project's own ECR mirror (ecr.tf), not directly
+      # from public.ecr.aws - see ecr.tf for why.
+      image     = "${aws_ecr_repository.ui.repository_url}:${var.image_tag}"
       essential = true
       portMappings = [{
         containerPort = var.ui_container_port
@@ -24,9 +26,22 @@ resource "aws_ecs_task_definition" "ui" {
       # NOTE: UI expects a Catalog endpoint too. Not deployed in Phase 1 —
       # catalog-dependent pages will error until Phase 2. See
       # docs/architecture.md open items before treating this as a bug.
+      # Confirmed against the actual UI source (EndpointProperties.java):
+      # @ConfigurationProperties("retail.ui.endpoints") with a "carts"
+      # field binds to env var RETAIL_UI_ENDPOINTS_CARTS via Spring Boot's
+      # relaxed binding (dots -> underscores, uppercase). The original
+      # RETAIL_CARTS_ENDPOINT name was a plausible-looking guess based on
+      # this app family's naming pattern elsewhere, never verified against
+      # source - unlike the Carts service's DynamoDB env vars, which were
+      # confirmed against real documentation from the start. Wrong name
+      # meant EndpointProperties.carts stayed null, which triggered
+      # CartClient's fallback to http://localhost:8080 - the UI silently
+      # called itself instead of Carts, explaining why nothing ever
+      # errored, and why DynamoDB never received a single write despite
+      # the app appearing to work perfectly from the browser.
       environment = [
         {
-          name  = "RETAIL_CARTS_ENDPOINT"
+          name  = "RETAIL_UI_ENDPOINTS_CARTS"
           value = "http://carts.${var.project_name}.local:${var.carts_container_port}"
         }
       ]

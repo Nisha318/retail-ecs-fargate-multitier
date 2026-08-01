@@ -15,7 +15,9 @@ resource "aws_ecs_task_definition" "carts" {
   container_definitions = jsonencode([
     {
       name      = "carts"
-      image     = var.carts_image
+      # Pulls from this project's own ECR mirror (ecr.tf), not directly
+      # from public.ecr.aws - see ecr.tf for why.
+      image     = "${aws_ecr_repository.cart.repository_url}:${var.image_tag}"
       essential = true
       portMappings = [{
         containerPort = var.carts_container_port
