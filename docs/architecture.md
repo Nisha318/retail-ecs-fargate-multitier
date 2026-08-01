@@ -16,6 +16,8 @@ flowchart TB
         R53[Route 53<br/>retail-multitier.nishacloudprojects.click]
     end
 
+    WAF[[AWS WAF<br/>Common Rules + Known Bad Inputs]]
+
     subgraph VPC["VPC (10.20.0.0/16)"]
         subgraph Public["Public Subnets (2 AZs)"]
             ALB[Application Load Balancer<br/>HTTPS :443, ACM cert]
@@ -41,6 +43,7 @@ flowchart TB
     ECR[(Private ECR<br/>this account)]
 
     R53 -.->|alias record| ALB
+    WAF -.->|blocks malicious requests| ALB
     User -->|HTTPS :443| ALB
     ALB -->|:8080| UI
     UI -.->|resolves via| SD
@@ -55,12 +58,14 @@ flowchart TB
     classDef publicNode fill:#a5d8ff,stroke:#1c7ed6,stroke-width:2px,color:#0b3d66
     classDef computeNode fill:#d0bfff,stroke:#7048e8,stroke-width:2px,color:#3b1a80
     classDef dataNode fill:#96f2d7,stroke:#0ca678,stroke-width:2px,color:#04432f
+    classDef securityNode fill:#ffe066,stroke:#f08c00,stroke-width:2px,color:#5c3c00
     classDef externalNode fill:#ffd8a8,stroke:#e8590c,stroke-width:2px,color:#5c2a00
     classDef dnsNode fill:#ffc9c9,stroke:#e03131,stroke-width:2px,color:#5c0a0a
     classDef userNode fill:#eaeaea,stroke:#495057,stroke-width:2px,color:#212529
 
     class User userNode
     class R53 dnsNode
+    class WAF securityNode
     class ALB publicNode
     class UI,Carts,SD computeNode
     class EcrApi,EcrDkr,LogsEp,S3Ep,DdbEp,DDB dataNode
@@ -71,6 +76,21 @@ flowchart TB
     style Private fill:#f3effd,stroke:#7048e8,stroke-width:1px,stroke-dasharray: 3 3
     style Endpoints fill:#e6fcf5,stroke:#0ca678,stroke-width:1px,stroke-dasharray: 3 3
     style Internet fill:none,stroke:none
+
+    subgraph Legend[" "]
+        L1[Public-facing]
+        L2[Compute]
+        L3[Data store / endpoint]
+        L8[Security control]
+        L4[AWS platform service]
+        L5[DNS]
+    end
+    class L1 publicNode
+    class L2 computeNode
+    class L3 dataNode
+    class L8 securityNode
+    class L4 externalNode
+    class L5 dnsNode
 ```
 
 Solid arrows are application traffic. Dashed arrows are infrastructure and control plane traffic (image pulls, log shipping) that would normally require a NAT Gateway but is routed through VPC endpoints instead in this build. Task definitions pull from a private ECR mirror in this account, not directly from `public.ecr.aws`; see the Decisions and Verification Log for why.
@@ -111,6 +131,154 @@ Reused from AWS's own ECS Immersion Day CloudFormation template (confirmed accur
 - Partition key: `id` (String)
 - Billing mode: PAY_PER_REQUEST
 - GSI: `idx_global_customerId`, partition key `customerId` (String), projects ALL
+
+## Target architecture (all phases)
+
+The diagram above shows Phase 1 only, UI and Carts. This is the full five-service target this project builds toward across Phases 1 through 3, shown at the infrastructure level, same style as the diagram above, extended.
+
+```mermaid
+flowchart TB
+    subgraph Internet[" "]
+        User([User])
+        R53[Route 53]
+    end
+
+    WAF[[AWS WAF<br/>Common Rules + Known Bad Inputs]]
+
+    subgraph VPC["VPC (10.20.0.0/16)"]
+        subgraph Public["Public Subnets"]
+            ALB[Application Load Balancer]
+        end
+
+        subgraph Private["Private Subnets"]
+            UI["ECS Fargate: UI"]
+            Carts["ECS Fargate: Carts"]
+            Catalog["ECS Fargate: Catalog"]
+            Checkout["ECS Fargate: Checkout"]
+            Orders["ECS Fargate: Orders"]
+
+            subgraph Endpoints["VPC Endpoints"]
+                EcrEp["ecr.api / ecr.dkr"]
+                LogsEp["logs"]
+                SecretsEp["secretsmanager"]
+                S3Ep["s3 (gateway)"]
+                DdbEp["dynamodb (gateway)"]
+            end
+        end
+    end
+
+    DDB[(DynamoDB<br/>carts table)]
+    MySQL[(Aurora MySQL<br/>Serverless v2)]
+    Redis[(ElastiCache Redis)]
+    Postgres[(Aurora PostgreSQL)]
+    MQ{{Amazon MQ}}
+    ECR[(Private ECR)]
+    CW[(CloudWatch Logs)]
+
+    R53 -.-> ALB
+    WAF -.->|blocks malicious requests| ALB
+    User -->|HTTPS :443| ALB
+    ALB --> UI
+    UI -->|service discovery| Carts
+    UI -->|service discovery| Catalog
+    UI -->|service discovery| Checkout
+    UI -->|service discovery| Orders
+
+    Carts --> DDB
+    Catalog --> MySQL
+    Checkout --> Redis
+    Orders --> Postgres
+    Orders --> MQ
+
+    UI -.->|via endpoints| Endpoints
+    Carts -.->|via endpoints| Endpoints
+    Catalog -.->|via endpoints| Endpoints
+    Checkout -.->|via endpoints| Endpoints
+    Orders -.->|via endpoints| Endpoints
+    Endpoints -.-> ECR
+    Endpoints -.-> CW
+
+    classDef publicNode fill:#a5d8ff,stroke:#1c7ed6,stroke-width:2px,color:#0b3d66
+    classDef computeNode fill:#d0bfff,stroke:#7048e8,stroke-width:2px,color:#3b1a80
+    classDef dataNode fill:#96f2d7,stroke:#0ca678,stroke-width:2px,color:#04432f
+    classDef endpointNode fill:#c5f6fa,stroke:#0c8599,stroke-width:2px,color:#083344
+    classDef messagingNode fill:#fcc2d7,stroke:#c2255c,stroke-width:2px,color:#5c0b2e
+    classDef securityNode fill:#ffe066,stroke:#f08c00,stroke-width:2px,color:#5c3c00
+    classDef externalNode fill:#ffd8a8,stroke:#e8590c,stroke-width:2px,color:#5c2a00
+    classDef dnsNode fill:#ffc9c9,stroke:#e03131,stroke-width:2px,color:#5c0a0a
+    classDef userNode fill:#eaeaea,stroke:#495057,stroke-width:2px,color:#212529
+
+    class User userNode
+    class R53 dnsNode
+    class WAF securityNode
+    class ALB publicNode
+    class UI,Carts,Catalog,Checkout,Orders computeNode
+    class DDB,MySQL,Redis,Postgres dataNode
+    class MQ messagingNode
+    class EcrEp,LogsEp,SecretsEp,S3Ep,DdbEp endpointNode
+    class ECR,CW externalNode
+
+    subgraph Legend[" "]
+        L1[Public-facing]
+        L2[Compute]
+        L3[Data store]
+        L6[VPC Endpoint]
+        L7[Messaging]
+        L8[Security control]
+        L4[AWS platform service]
+        L5[DNS]
+    end
+    class L1 publicNode
+    class L2 computeNode
+    class L3 dataNode
+    class L6 endpointNode
+    class L7 messagingNode
+    class L8 securityNode
+    class L4 externalNode
+    class L5 dnsNode
+```
+*Full target infrastructure across all three phases. Phase 1 (UI, Carts) is deployed and verified; Catalog, Checkout, and Orders are planned for Phases 2 and 3. Solid arrows are application traffic; dashed arrows are infrastructure and control-plane traffic routed through VPC endpoints.*
+
+## Logical service architecture
+
+The diagram above shows AWS infrastructure, VPCs, subnets, endpoints, the physical deployment. It answers "what's provisioned and how does it connect at the network level." It deliberately doesn't answer a different, equally important question: which service owns which data, and why. That's a separate concern worth its own diagram rather than overloading the infrastructure one.
+
+```mermaid
+flowchart TB
+    UI((UI))
+
+    UI --> Orders((Orders))
+    UI --> Checkout((Checkout))
+    UI --> Carts((Carts))
+    UI --> Catalog((Catalog))
+
+    Orders --> OrdersDB[(PostgreSQL)]
+    Checkout --> CheckoutDB[(Redis)]
+    Carts --> CartsDB[(DynamoDB)]
+    Catalog --> CatalogDB[(MySQL / MariaDB)]
+
+    MQ{{Amazon MQ}}
+    Checkout -.-> MQ
+    MQ -.-> Orders
+
+    classDef app fill:#1c3a5e,stroke:#4a9eed,stroke-width:2px,color:#a5d8ff
+    classDef persistence fill:#0d3320,stroke:#2f9e44,stroke-width:2px,color:#96f2d7
+    classDef messaging fill:#4a1414,stroke:#e03131,stroke-width:2px,color:#ffc9c9
+
+    class UI,Orders,Checkout,Carts,Catalog app
+    class OrdersDB,CheckoutDB,CartsDB,CatalogDB persistence
+    class MQ messaging
+
+    subgraph Legend[" "]
+        L1[App Service]
+        L2[Persistence Infrastructure]
+        L3[Messaging Infrastructure]
+    end
+    class L1 app
+    class L2 persistence
+    class L3 messaging
+```
+*Logical service-to-datastore dependencies, independent of AWS specifics. This is the view that explains the polyglot persistence decisions below: each service owns its data exclusively, and the technology choice per service follows from its access pattern, not from AWS's infrastructure options.*
 
 ## Data store rationale
 
@@ -170,13 +338,19 @@ Reference: AWS Prescriptive Guidance, [Enabling data persistence in microservice
 ## Deployment evidence
 
 ![ECS console showing ui and carts services both healthy](images/phase1/ecs-services-healthy.png)
+*Both ECS services at steady state with healthy task counts.*
 
 ![VPC resource map showing subnets, route tables, and endpoints](images/phase1/vpc-resource-map.png)
+*The actual provisioned VPC layout, subnets, route tables, and endpoints, matching the architecture diagram above.*
 
 ![WAFv2 web ACL with both managed rule groups attached](images/phase1/waf-managed-rules.png)
+*The WAFv2 web ACL, showing both the Common Rule Set and the Log4j-specific Known Bad Inputs rule group attached to the ALB.*
 
 ![CloudWatch Logs showing real application logs, KMS-encrypted](images/phase1/cloudwatch-logs.png)
+*Live application logs in the KMS-encrypted CloudWatch log group.*
 
 ![Route 53 hosted zone after apply, showing cert-validation CNAME and ALB alias record](images/phase1/route53-records.png)
+*The DNS records OpenTofu created automatically: the ACM validation CNAME and the ALB alias record.*
 
 ![GitHub Actions final green pipeline run](images/phase1/github-actions-green.png)
+*The CI pipeline passing clean, Checkov, Gitleaks, and OIDC-authenticated Trivy scans against the private ECR mirror.*
