@@ -25,7 +25,7 @@ jobs:
           # this action does not reliably pick up .checkovignore from the
           # scanned directory. See infra/.checkovignore for the documented
           # justification behind each of these.
-          skip_check: CKV_AWS_382,CKV_AWS_119,CKV_AWS_150,CKV_AWS_260,CKV_AWS_18,CKV2_AWS_62,CKV_AWS_144,CKV_AWS_145,CKV2_AWS_76,CKV_AWS_136,CKV_AWS_327,CKV_AWS_118,CKV2_AWS_8
+          skip_check: CKV_AWS_382,CKV_AWS_119,CKV_AWS_150,CKV_AWS_260,CKV_AWS_18,CKV2_AWS_62,CKV_AWS_144,CKV_AWS_145,CKV2_AWS_76,CKV_AWS_136,CKV_AWS_327,CKV_AWS_118,CKV2_AWS_8,CKV_AWS_326,CKV_AWS_162,CKV_AWS_325,CKV_AWS_139,CKV_AWS_354
 
   gitleaks:
     runs-on: ubuntu-latest
@@ -56,6 +56,7 @@ jobs:
         repo:
           - retail-multitier/retail-store-sample-ui
           - retail-multitier/retail-store-sample-cart
+          - retail-multitier/retail-store-sample-catalog
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

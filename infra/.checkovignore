@@ -123,3 +123,50 @@ CKV_AWS_118
 # ephemeral by design would be backing up something with no intended
 # lifespan to back up.
 CKV2_AWS_8
+
+# CKV_AWS_326: "Ensure that RDS Aurora Clusters have backtracking enabled"
+# Backtracking adds real storage cost (extra change-record retention) to
+# let you rewind the cluster without a full snapshot restore. Same
+# reasoning as skip_final_snapshot right above it in aurora.tf: this
+# database is torn down between sessions by design, not something that
+# needs point-in-time rewind capability.
+CKV_AWS_326
+
+# CKV_AWS_162: "Ensure RDS cluster has IAM authentication enabled"
+# Confirmed unusable, not just unnecessary: Catalog's own source
+# (repository.go) builds its MySQL connection with GORM using a static
+# username/password DSN, with no code path that could use an IAM auth
+# token even if this were enabled. Turning this on would be a checkbox
+# with zero actual effect, since the application has no capability to
+# use it. See the Decisions and Verification Log for the source
+# confirmation.
+CKV_AWS_162
+
+# CKV_AWS_325: "Ensure that RDS Cluster audit logging is enabled for
+# MySQL engine"
+# The same "audit" log stream already deliberately omitted from
+# enabled_cloudwatch_logs_exports in aurora.tf, for the same reason:
+# Aurora MySQL audit logging requires a custom DB cluster parameter
+# group, a real added resource and management overhead not otherwise
+# needed in this project. error/general/slowquery exports are already
+# enabled and have covered every debugging need so far.
+CKV_AWS_325
+
+# CKV_AWS_139: "Ensure that RDS clusters have deletion protection
+# enabled"
+# Same reasoning already established for the ALB (CKV_AWS_150): this is
+# a personal learning project meant to be torn down between sessions,
+# not a production database. A production version of this infrastructure
+# would enable this.
+CKV_AWS_139
+
+# CKV_AWS_354: "Ensure RDS Performance Insights are encrypted using KMS
+# CMKs"
+# A new finding surfaced specifically by enabling Performance Insights
+# last round, not something that existed before. Same encryption
+# tradeoff already applied consistently to DynamoDB (CKV_AWS_119), ECR
+# (CKV_AWS_136), and Aurora's own storage (CKV_AWS_327): default
+# AWS-managed encryption is genuinely sufficient for this project's
+# non-sensitive demo data, and a customer-managed key adds cost and
+# management overhead disproportionate to the actual risk.
+CKV_AWS_354

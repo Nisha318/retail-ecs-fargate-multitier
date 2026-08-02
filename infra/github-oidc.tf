@@ -1,8 +1,8 @@
 # IAM role assumed by this project's GitHub Actions pipeline (via OIDC),
-# scoped to read-only access on exactly the two ECR repos this project
-# owns, so CI can pull and scan the private mirror images instead of
-# scanning public.ecr.aws source images that differ from what's actually
-# deployed.
+# scoped to read-only access on exactly the three ECR repos this project
+# owns (ui, cart, catalog), so CI can pull and scan the private mirror
+# images instead of scanning public.ecr.aws source images that differ
+# from what's actually deployed.
 #
 # Uses a DATA SOURCE for the OIDC provider, not a resource. The GitHub
 # Actions OIDC provider (token.actions.githubusercontent.com) is an
@@ -87,7 +87,8 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
         ]
         Resource = [
           aws_ecr_repository.ui.arn,
-          aws_ecr_repository.cart.arn
+          aws_ecr_repository.cart.arn,
+          aws_ecr_repository.catalog.arn
         ]
       }
     ]
