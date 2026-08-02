@@ -22,9 +22,23 @@ resource "aws_iam_role" "github_actions_ecr" {
 
   # Subject condition scoped to this exact repo, main branch only, so no
   # other repo (including forks) can assume this role even if they somehow
-  # obtained a token from the same OIDC provider. GitHub sends the
-  # username in lowercase in the actual token regardless of profile
-  # display casing - the condition must match that, not the display name.
+  # obtained a token from the same OIDC provider.
+  #
+  # Uses GitHub's newer IMMUTABLE subject claim format
+  # (repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/BRANCH), not the
+  # older repo:owner/repo:ref:... format. GitHub rolled this out for any
+  # repository created after July 15, 2026 (confirmed via this repo's own
+  # Settings > Actions > OIDC page, and against GitHub's official OIDC
+  # reference docs and changelog). This repo was created after that date,
+  # so it uses the immutable format automatically, not by choice.
+  #
+  # This also overturns an assumption carried over from an earlier
+  # project: the old format lowercases the username in the actual token
+  # regardless of profile display casing, but the immutable format does
+  # NOT lowercase it - the numeric owner/repo IDs are what guarantee
+  # uniqueness now, so the name portion keeps its real display casing
+  # (capital "Nisha318" here, confirmed directly from the OIDC settings
+  # page's displayed subject claim prefix, not assumed).
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -36,7 +50,7 @@ resource "aws_iam_role" "github_actions_ecr" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:nisha318/retail-ecs-fargate-multitier:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub" = "repo:Nisha318@12909665/retail-ecs-fargate-multitier@1317786628:ref:refs/heads/main"
         }
       }
     }]

@@ -47,6 +47,15 @@ resource "aws_rds_cluster" "catalog" {
 
   storage_encrypted = true
 
+  # CloudWatch log exports. Cheap (standard CloudWatch Logs ingestion
+  # cost) and directly useful given how much of this project's debugging
+  # has relied on real logs rather than assumptions. "audit" is
+  # intentionally omitted - it requires a custom DB cluster parameter
+  # group not otherwise needed here.
+  enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
+
+  copy_tags_to_snapshot = true
+
   # This is a personal dev/test project torn down between sessions, not a
   # production database. A production version of this infrastructure
   # would not set this.
@@ -58,10 +67,17 @@ resource "aws_rds_cluster" "catalog" {
 }
 
 resource "aws_rds_cluster_instance" "catalog" {
-  cluster_identifier = aws_rds_cluster.catalog.id
-  instance_class      = "db.serverless"
-  engine              = aws_rds_cluster.catalog.engine
-  engine_version       = aws_rds_cluster.catalog.engine_version
+  cluster_identifier         = aws_rds_cluster.catalog.id
+  instance_class             = "db.serverless"
+  engine                     = aws_rds_cluster.catalog.engine
+  engine_version             = aws_rds_cluster.catalog.engine_version
+  auto_minor_version_upgrade = true
+
+  # Free tier (7-day retention, the default) covers this at no extra
+  # cost, and would have been genuinely useful during tonight's
+  # debugging session for query-level visibility beyond what the
+  # application's own logs showed.
+  performance_insights_enabled = true
 
   tags = {
     Name = "${var.project_name}-catalog-aurora-instance"

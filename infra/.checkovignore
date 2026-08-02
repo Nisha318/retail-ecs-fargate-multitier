@@ -95,3 +95,31 @@ CKV2_AWS_76
 # script credentials), a real operational complexity increase for
 # protecting content that isn't sensitive in the first place.
 CKV_AWS_136
+
+# CKV_AWS_327: "Ensure RDS Clusters are encrypted using KMS CMKs"
+# Aurora uses AWS's default (AWS-owned key) encryption at rest rather
+# than a customer-managed key. Same reasoning as CKV_AWS_119 (DynamoDB):
+# this cluster holds Catalog's demo/seed product data, not real customer
+# PII, and a customer-managed key adds recurring cost and key-management
+# overhead disproportionate to the actual sensitivity of what's stored.
+CKV_AWS_327
+
+# CKV_AWS_118: "Ensure that enhanced monitoring is enabled for Amazon
+# RDS instances"
+# Enhanced Monitoring requires a dedicated IAM role and has a real
+# ongoing CloudWatch cost beyond the free tier. This project's Aurora
+# troubleshooting has so far been fully solvable with the CloudWatch Logs
+# exports already enabled (see aurora.tf) and Performance Insights
+# (also enabled), without needing OS-level process/thread metrics.
+# Revisit if a future phase's debugging genuinely needs that level of
+# detail.
+CKV_AWS_118
+
+# CKV2_AWS_8: "Ensure that RDS clusters has backup plan of AWS Backup"
+# Directly contradicts this cluster's own already-documented design:
+# skip_final_snapshot = true (see aurora.tf) because this is a personal
+# dev/test database explicitly torn down between sessions, not meant to
+# persist. Configuring a backup plan for data that's deliberately
+# ephemeral by design would be backing up something with no intended
+# lifespan to back up.
+CKV2_AWS_8

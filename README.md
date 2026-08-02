@@ -204,6 +204,9 @@ If the ECS services are already running and stuck retrying a failed pull, the sc
 ![A cart item added in the UI, confirmed present in the DynamoDB table via AWS console](docs/images/phase1/cart-item-dynamodb-1.png)
 *An item added to the cart through the live UI.*
 
+![Live product detail page, showing a real database-generated UUID in the URL](docs/images/phase2/catalog-product-detail.png)
+*Phase 2: real Aurora-backed product data rendering through UI's product detail page, not just the listing page, confirming the full UI-to-Catalog-to-Aurora chain works end to end.*
+
 ![A cart item added in the UI, confirmed present in the DynamoDB table via AWS console](docs/images/phase1/cart-item-dynamodb-2.png)
 *The same item confirmed in the DynamoDB table via a direct scan, verifying the full request path actually persisted data end to end.*
 
@@ -219,6 +222,6 @@ Verified working via direct evidence, not just healthy status checks: a cart ite
 
 Aurora's connectivity and the application's own database migration worked correctly on the very first attempt, confirmed directly in CloudWatch Logs. The actual bug was different from Phase 1's: Catalog's task health check trusted the service's own documented "test access" endpoint (`/catalogue`), which turned out to be wrong for the deployed version. The logs made this unambiguous, the health check's `/catalogue` requests returned a clean `404` on a 15-second loop, while genuine traffic from UI was simultaneously succeeding against `/catalog/products` in the same log stream. Fixed by pointing the health check at the path already confirmed working from real traffic, not another guess from documentation.
 
-Verified working via direct evidence again: the live `/catalog` page renders real, Aurora-backed product data (GORM auto-seeds it on startup), confirmed by screenshot, not just a passing health check.
+Verified working via direct evidence again: the live `/catalog` page renders real, Aurora-backed product data (GORM auto-seeds it on startup), not just a passing health check, see the product detail screenshot in the [Deployed](#deployed) section above.
 
 The infrastructure has since been torn down between sessions to control cost, a deliberate choice for this personal project, not an indication anything is broken. See [`docs/architecture.md`](docs/architecture.md) for the full debugging narrative and the "Getting started" section above to redeploy.

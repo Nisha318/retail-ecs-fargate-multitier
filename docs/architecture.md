@@ -392,6 +392,9 @@ Reference: AWS Prescriptive Guidance, [Enabling data persistence in microservice
 ![Live catalog page rendering real Aurora-backed product data](images/phase2/catalog-page-live.png)
 *The full Phase 2 chain confirmed end to end: browser to UI to Catalog to Aurora MySQL, rendering data GORM auto-seeded on startup, not placeholder content.*
 
+![Live product detail page, showing a real database-generated UUID in the URL](images/phase2/catalog-product-detail.png)
+*A different code path than the listing page above (`GetProduct(id)` rather than `GetProducts`), confirming individual product lookups work too, not just the bulk listing query.*
+
 ![Aurora cluster available in the RDS console, showing active ACU usage](images/phase2/aurora-available.png)
 *Aurora Serverless v2 scaled up from its paused (0 ACU) state and actively serving, not just provisioned.*
 
