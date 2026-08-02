@@ -67,3 +67,46 @@ variable "site_subdomain" {
   type        = string
   default     = "retail-multitier"
 }
+
+# --- Phase 2: Catalog + Aurora MySQL ---
+
+variable "catalog_image" {
+  description = "SOURCE image for the Catalog service - public.ecr.aws. Repository name and tag NOT YET CONFIRMED via docker pull, unlike ui_image/carts_image. Confirm before first apply, same discipline that caught the plural/singular 'cart' naming issue in Phase 1. Used as the reference for scripts/mirror-images.sh, not what the task definition actually pulls from."
+  type        = string
+  default     = "public.ecr.aws/aws-containers/retail-store-sample-catalog:1.2.4"
+}
+
+variable "catalog_image_tag" {
+  description = "Tag for the Catalog source pull and its private ECR mirror. Kept separate from image_tag (UI/Carts) since Catalog may release on a different cadence - confirm this tag actually exists via docker pull before first apply."
+  type        = string
+  default     = "1.2.4"
+}
+
+variable "catalog_container_port" {
+  type    = number
+  default = 8080
+}
+
+variable "aurora_db_name" {
+  description = "Matches Catalog's own default (RETAIL_CATALOG_PERSISTENCE_DB_NAME), confirmed via the service's README and source. Not a value we chose independently."
+  type        = string
+  default     = "catalogdb"
+}
+
+variable "aurora_master_username" {
+  description = "Matches Catalog's own default (RETAIL_CATALOG_PERSISTENCE_USER), confirmed via the service's README and source."
+  type        = string
+  default     = "catalog_user"
+}
+
+variable "aurora_min_capacity" {
+  description = "Minimum Aurora Serverless v2 ACUs. 0 enables auto-pause when idle (supported on the engine version pinned in aurora.tf), which is the right default for a project that gets torn down between sessions rather than left running."
+  type        = number
+  default     = 0
+}
+
+variable "aurora_max_capacity" {
+  description = "Maximum Aurora Serverless v2 ACUs. Kept low deliberately - this is a personal project's dev/test catalog database, not a production workload sized for real traffic."
+  type        = number
+  default     = 2
+}

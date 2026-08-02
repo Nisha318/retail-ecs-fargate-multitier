@@ -3,6 +3,7 @@ locals {
     "ecr.api",
     "ecr.dkr",
     "logs",
+    "secretsmanager",
   ]
 }
 

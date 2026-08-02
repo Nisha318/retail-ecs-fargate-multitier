@@ -80,3 +80,18 @@ CKV_AWS_145
 # issue in this run rather than a real gap in the configuration. Revisit
 # if this persists after a future Checkov version bump.
 CKV2_AWS_76
+
+# CKV_AWS_136: "Ensure that ECR repositories are encrypted using KMS"
+# All three private ECR repositories (ui, cart, catalog) use AES256
+# (default AWS-managed encryption) rather than a customer-managed KMS
+# key. Deliberately different treatment than CloudWatch Logs, which does
+# use a customer-managed key: these repositories hold public,
+# already-public container images mirrored from public.ecr.aws (see
+# scripts/mirror-images.sh), not proprietary code or embedded secrets -
+# credentials are injected at runtime via Secrets Manager, never baked
+# into the image. Switching to CMK encryption here would require an
+# explicit KMS grant for every principal that pulls an image (all ECS
+# task execution roles, the GitHub Actions OIDC role, and local mirror
+# script credentials), a real operational complexity increase for
+# protecting content that isn't sensitive in the first place.
+CKV_AWS_136

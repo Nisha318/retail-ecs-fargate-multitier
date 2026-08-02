@@ -115,3 +115,55 @@ resource "aws_security_group" "carts_task" {
     Name = "${var.project_name}-carts-task-sg"
   }
 }
+
+resource "aws_security_group" "catalog_task" {
+  name        = "${var.project_name}-catalog-task"
+  description = "Catalog Fargate task security group"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "From UI service"
+    from_port       = var.catalog_container_port
+    to_port         = var.catalog_container_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ui_task.id]
+  }
+
+  egress {
+    description = "All outbound traffic (image pulls, logs, Secrets Manager via VPC endpoints, and Aurora on 3306; no NAT Gateway in this design)"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-catalog-task-sg"
+  }
+}
+
+resource "aws_security_group" "aurora" {
+  name        = "${var.project_name}-aurora"
+  description = "Aurora MySQL security group - accepts connections only from the Catalog task"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "MySQL from Catalog service only"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.catalog_task.id]
+  }
+
+  egress {
+    description = "No outbound needed - Aurora does not initiate connections"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-aurora-sg"
+  }
+}

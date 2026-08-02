@@ -24,3 +24,13 @@ output "github_actions_ecr_role_arn" {
   description = "Role ARN for the CI pipeline to configure in .github/workflows/pipeline.yml"
   value       = aws_iam_role.github_actions_ecr.arn
 }
+
+output "aurora_cluster_endpoint" {
+  description = "Aurora writer endpoint - useful for manually verifying connectivity or the master secret during troubleshooting"
+  value       = aws_rds_cluster.catalog.endpoint
+}
+
+output "aurora_master_secret_arn" {
+  description = "ARN of the AWS-managed Secrets Manager secret holding Aurora's master credentials. Retrieve the actual value only via `aws secretsmanager get-secret-value`, never printed here."
+  value       = aws_rds_cluster.catalog.master_user_secret[0].secret_arn
+}

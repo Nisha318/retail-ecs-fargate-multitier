@@ -23,9 +23,15 @@ resource "aws_ecs_task_definition" "ui" {
         containerPort = var.ui_container_port
         protocol      = "tcp"
       }]
-      # NOTE: UI expects a Catalog endpoint too. Not deployed in Phase 1 —
-      # catalog-dependent pages will error until Phase 2. See
-      # docs/architecture.md open items before treating this as a bug.
+      # NOTE: this closes the Phase 1 known gap (see docs/architecture.md)
+      # where UI's Catalog dependency was unresolved because Catalog
+      # wasn't deployed yet. RETAIL_UI_ENDPOINTS_CATALOG follows the same
+      # confirmed Spring Boot relaxed-binding rule as RETAIL_UI_ENDPOINTS_
+      # CARTS below - "catalog" is a sibling field in the same
+      # EndpointProperties.java class under @ConfigurationProperties
+      # ("retail.ui.endpoints"), so this is applying an already-verified
+      # rule, not a fresh guess.
+      #
       # Confirmed against the actual UI source (EndpointProperties.java):
       # @ConfigurationProperties("retail.ui.endpoints") with a "carts"
       # field binds to env var RETAIL_UI_ENDPOINTS_CARTS via Spring Boot's
@@ -43,6 +49,10 @@ resource "aws_ecs_task_definition" "ui" {
         {
           name  = "RETAIL_UI_ENDPOINTS_CARTS"
           value = "http://carts.${var.project_name}.local:${var.carts_container_port}"
+        },
+        {
+          name  = "RETAIL_UI_ENDPOINTS_CATALOG"
+          value = "http://catalog.${var.project_name}.local:${var.catalog_container_port}"
         }
       ]
       logConfiguration = {

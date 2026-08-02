@@ -90,7 +90,7 @@ flowchart TB
     class L5 dnsNode
 ```
 
-Solid arrows are application traffic. Dashed arrows are infrastructure and control plane traffic (image pulls, log shipping, DNS) routed through VPC endpoints instead of a NAT Gateway. Task definitions pull from a private ECR mirror in this account, not directly from `public.ecr.aws` (see `scripts/mirror-images.sh` and `docs/architecture.md` for why). This diagram reflects Phase 1 only. See `docs/architecture.md` for the full five-service target architecture.
+Solid arrows are application traffic. Dashed arrows are infrastructure and control plane traffic (image pulls, log shipping, DNS) routed through VPC endpoints instead of a NAT Gateway. Task definitions pull from a private ECR mirror in this account, not directly from `public.ecr.aws` (see [`scripts/mirror-images.sh`](scripts/mirror-images.sh) and [`docs/architecture.md`](docs/architecture.md) for why). This diagram reflects Phase 1 only. See [`docs/architecture.md`](docs/architecture.md) for the full five-service target architecture.
 
 ## Why this project exists
 
@@ -101,7 +101,7 @@ This project replaces an earlier attempt at AWS's own ECS Immersion Day workshop
 | Phase | Services | New AWS dependencies | Status |
 |---|---|---|---|
 | 1 | UI + Carts | DynamoDB | Deployed and verified |
-| 2 | + Catalog | Aurora MySQL (Serverless v2) | Planned |
+| 2 | + Catalog | Aurora MySQL (Serverless v2) | Deployed and verified |
 | 3 | + Checkout, Orders | ElastiCache Redis, Aurora PostgreSQL, Amazon MQ | Planned |
 
 ## Phase 1 architecture
@@ -114,7 +114,17 @@ This project replaces an earlier attempt at AWS's own ECS Immersion Day workshop
 - DynamoDB table for cart persistence, with IAM scoped to that table's ARN specifically (not `dynamodb:*`)
 - Task execution role and task role kept separate per service, per ECS best practice
 
-See `docs/architecture.md` for the full design breakdown, including the data store rationale across all five services in the target architecture (not just the two in Phase 1).
+See [`docs/architecture.md`](docs/architecture.md) for the full design breakdown, including the data store rationale across all five services in the target architecture (not just the two in Phase 1).
+
+## Phase 2 architecture
+
+- ECS Fargate Catalog service, added to the same cluster and VPC as Phase 1, no new networking required
+- Aurora MySQL Serverless v2 for Catalog's product data, master password fully AWS-managed via Secrets Manager (`manage_master_user_password`), never generated or stored by Terraform
+- `min_capacity = 0` on Aurora, enabling auto-pause when idle, since this project gets torn down between sessions rather than left running
+- Catalog gets its **own dedicated task execution role**, not the shared one UI and Carts use, so read access to Aurora's credentials stays scoped to Catalog only
+- Secrets Manager reached via VPC interface endpoint, same PrivateLink pattern as everything else in this project, no NAT Gateway involved
+- Catalog is internal-only, reachable via service discovery exactly like Carts, no public exposure or ALB target group
+- Closes Phase 1's known gap: UI's Catalog integration (`RETAIL_UI_ENDPOINTS_CATALOG`) now resolves correctly, confirmed via a live screenshot of real, Aurora-backed product data
 
 ## Repo structure
 
@@ -157,8 +167,8 @@ retail-ecs-fargate-multitier/
 
 - OpenTofu >= 1.6
 - AWS CLI configured with appropriate credentials
-- Access to the existing remote state backend (S3 bucket and DynamoDB lock table; see `infra/providers.tf`. This project reuses infrastructure already provisioned for other projects rather than creating its own.)
-- An existing Route 53 public hosted zone for the domain referenced in `infra/variables.tf`
+- Access to the existing remote state backend (S3 bucket and DynamoDB lock table; see [`infra/providers.tf`](infra/providers.tf). This project reuses infrastructure already provisioned for other projects rather than creating its own.)
+- An existing Route 53 public hosted zone for the domain referenced in [`infra/variables.tf`](infra/variables.tf)
 
 ## Getting started
 
@@ -175,7 +185,7 @@ Review the plan output fully before applying anything.
 tofu apply
 ```
 
-**Then, before the ECS services can successfully start:** this project pulls two images from `public.ecr.aws`, which is not reliably reachable from a private subnet with no NAT Gateway (confirmed the hard way, see `docs/architecture.md`). The task definitions pull from private ECR mirrors instead, which must be populated once:
+**Then, before the ECS services can successfully start:** this project pulls two images from `public.ecr.aws`, which is not reliably reachable from a private subnet with no NAT Gateway (confirmed the hard way, see [`docs/architecture.md`](docs/architecture.md)). The task definitions pull from private ECR mirrors instead, which must be populated once:
 
 ```bash
 ./scripts/mirror-images.sh
@@ -201,8 +211,14 @@ If the ECS services are already running and stuck retrying a failed pull, the sc
 
 **Phase 1 is complete: deployed, debugged, and verified end-to-end.**
 
-Infrastructure deployed cleanly on first apply. Getting the application actually working required root-causing two separate infrastructure issues (Public ECR image pulls not reachable via the private-ECR VPC endpoints; resolved by mirroring both images into a private ECR repository in this account) and one application-layer configuration bug (a mismatched environment variable name on the UI service caused it to silently call itself instead of the Carts service, meaning the app appeared fully functional while never actually writing to DynamoDB). All three are documented in full, including the diagnostic process, in the Decisions and Verification Log in `docs/architecture.md`.
+Infrastructure deployed cleanly on first apply. Getting the application actually working required root-causing two separate infrastructure issues (Public ECR image pulls not reachable via the private-ECR VPC endpoints; resolved by mirroring both images into a private ECR repository in this account) and one application-layer configuration bug (a mismatched environment variable name on the UI service caused it to silently call itself instead of the Carts service, meaning the app appeared fully functional while never actually writing to DynamoDB). All three are documented in full, including the diagnostic process, in the Decisions and Verification Log in [`docs/architecture.md`](docs/architecture.md).
 
 Verified working via direct evidence, not just healthy status checks: a cart item added through the live UI was confirmed present in the DynamoDB table via a direct scan.
 
-The infrastructure has since been torn down between sessions to control cost, a deliberate choice for this personal project, not an indication anything is broken. See `docs/architecture.md` for the full debugging narrative and the "Getting started" section above to redeploy.
+**Phase 2 is also complete: Catalog and Aurora MySQL deployed, debugged, and verified.**
+
+Aurora's connectivity and the application's own database migration worked correctly on the very first attempt, confirmed directly in CloudWatch Logs. The actual bug was different from Phase 1's: Catalog's task health check trusted the service's own documented "test access" endpoint (`/catalogue`), which turned out to be wrong for the deployed version. The logs made this unambiguous, the health check's `/catalogue` requests returned a clean `404` on a 15-second loop, while genuine traffic from UI was simultaneously succeeding against `/catalog/products` in the same log stream. Fixed by pointing the health check at the path already confirmed working from real traffic, not another guess from documentation.
+
+Verified working via direct evidence again: the live `/catalog` page renders real, Aurora-backed product data (GORM auto-seeds it on startup), confirmed by screenshot, not just a passing health check.
+
+The infrastructure has since been torn down between sessions to control cost, a deliberate choice for this personal project, not an indication anything is broken. See [`docs/architecture.md`](docs/architecture.md) for the full debugging narrative and the "Getting started" section above to redeploy.
