@@ -400,3 +400,9 @@ Reference: AWS Prescriptive Guidance, [Enabling data persistence in microservice
 
 ![Aurora's AWS-managed master secret in Secrets Manager](images/phase2/aurora-managed-secret.png)
 *The `rds!cluster-...` secret AWS generated and manages directly, confirming Terraform never touched the plaintext master password.*
+
+![Private ECR repositories for all three services in the console](images/phase2/ecr-repositories.png)
+*The private ECR mirror described throughout the Decisions and Verification Log, now complete across all three services. Confirms two Terraform-configured settings actually took effect: immutable tags (`image_tag_mutability = "IMMUTABLE"`) and the deliberate AES-256 encryption choice documented under CKV_AWS_136, not just default AWS-managed encryption nobody thought about.*
+
+![Matching image digests between public.ecr.aws and the private mirror, for all three services](images/phase2/ecr-digest-match.png)
+*The actual mirroring claim made visible: identical Image IDs between each public source image and its private mirror (cart, ui, catalog), confirming the mirror script produces byte-identical copies, not just repositories with matching names and tags.*
