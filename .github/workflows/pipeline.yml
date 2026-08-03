@@ -57,6 +57,7 @@ jobs:
           - retail-multitier/retail-store-sample-ui
           - retail-multitier/retail-store-sample-cart
           - retail-multitier/retail-store-sample-catalog
+          - retail-multitier/retail-store-sample-checkout
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

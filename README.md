@@ -1,5 +1,8 @@
 # Multi-Tier ECS Fargate Deployment
 
+[![Pipeline Status](https://github.com/nisha318/retail-ecs-fargate-multitier/actions/workflows/pipeline.yml/badge.svg)](https://github.com/nisha318/retail-ecs-fargate-multitier/actions/workflows/pipeline.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A security-conscious deployment of AWS's [retail-store-sample-app](https://github.com/aws-containers/retail-store-sample-app) on Amazon ECS Fargate, built and documented in phases as complexity increases.
 
 This project uses the sample application as the workload, but the infrastructure, security posture, and deployment approach are original work.
@@ -15,6 +18,8 @@ flowchart TB
 
     WAF[[AWS WAF<br/>Common Rules + Known Bad Inputs]]
 
+    IGW[Internet Gateway]
+
     subgraph VPC["VPC (10.20.0.0/16)"]
         subgraph Public["Public Subnets (2 AZs)"]
             ALB[Application Load Balancer<br/>HTTPS :443, ACM cert]
@@ -23,12 +28,14 @@ flowchart TB
         subgraph Private["Private Subnets (2 AZs)"]
             UI["ECS Fargate: UI Service"]
             Carts["ECS Fargate: Carts Service"]
-            SD["Service Discovery<br/>carts.retail-multitier.local"]
+            Catalog["ECS Fargate: Catalog Service"]
+            SD["Service Discovery<br/>*.retail-multitier.local"]
 
             subgraph Endpoints["VPC Endpoints (replace NAT Gateway)"]
                 EcrApi["ecr.api"]
                 EcrDkr["ecr.dkr"]
                 LogsEp["logs"]
+                SecretsEp["secretsmanager"]
                 S3Ep["s3 (gateway)"]
                 DdbEp["dynamodb (gateway)"]
             end
@@ -36,21 +43,28 @@ flowchart TB
     end
 
     DDB[(DynamoDB<br/>carts table)]
+    MySQL[(Aurora MySQL<br/>Serverless v2)]
     CW[(CloudWatch Logs)]
     ECR[(Private ECR<br/>this account)]
 
     R53 -.->|alias record| ALB
     WAF -.->|blocks malicious requests| ALB
-    User -->|HTTPS :443| ALB
+    User -->|HTTPS :443| IGW
+    IGW --> ALB
     ALB -->|:8080| UI
     UI -.->|resolves via| SD
     SD -.->|DNS answer| Carts
-    UI -->|:8080, direct connection| Carts
+    SD -.->|DNS answer| Catalog
+    UI -->|direct connection| Carts
+    UI -->|direct connection| Catalog
     Carts -->|via dynamodb gateway endpoint| DDB
-    UI -.->|via ecr endpoints, image pull| ECR
-    Carts -.->|via ecr endpoints, image pull| ECR
+    Catalog -->|credentials via secretsmanager endpoint| MySQL
+    UI -.->|via endpoints| ECR
+    Carts -.->|via endpoints| ECR
+    Catalog -.->|via endpoints| ECR
     UI -.->|via logs endpoint| CW
     Carts -.->|via logs endpoint| CW
+    Catalog -.->|via logs endpoint| CW
 
     classDef publicNode fill:#a5d8ff,stroke:#1c7ed6,stroke-width:2px,color:#0b3d66
     classDef computeNode fill:#d0bfff,stroke:#7048e8,stroke-width:2px,color:#3b1a80
@@ -63,9 +77,9 @@ flowchart TB
     class User userNode
     class R53 dnsNode
     class WAF securityNode
-    class ALB publicNode
-    class UI,Carts,SD computeNode
-    class EcrApi,EcrDkr,LogsEp,S3Ep,DdbEp,DDB dataNode
+    class ALB,IGW publicNode
+    class UI,Carts,Catalog,SD computeNode
+    class EcrApi,EcrDkr,LogsEp,SecretsEp,S3Ep,DdbEp,DDB,MySQL dataNode
     class CW,ECR externalNode
 
     style VPC fill:#f0f6ff,stroke:#4a9eed,stroke-width:2px
@@ -90,7 +104,7 @@ flowchart TB
     class L5 dnsNode
 ```
 
-Solid arrows are application traffic. Dashed arrows are infrastructure and control plane traffic (image pulls, log shipping, DNS) routed through VPC endpoints instead of a NAT Gateway. Task definitions pull from a private ECR mirror in this account, not directly from `public.ecr.aws` (see [`scripts/mirror-images.sh`](scripts/mirror-images.sh) and [`docs/architecture.md`](docs/architecture.md) for why). This diagram reflects Phase 1 only. See [`docs/architecture.md`](docs/architecture.md) for the full five-service target architecture.
+Solid arrows are application traffic. Dashed arrows are infrastructure and control plane traffic (image pulls, log shipping, DNS) routed through VPC endpoints instead of a NAT Gateway. Task definitions pull from a private ECR mirror in this account, not directly from `public.ecr.aws` (see [`scripts/mirror-images.sh`](scripts/mirror-images.sh) and [`docs/DECISIONS.md`](docs/DECISIONS.md) for why). This diagram reflects the current deployed state (Phase 1 + Phase 2). See [`docs/architecture.md`](docs/architecture.md) for the per-phase historical diagrams and the full five-service target architecture.
 
 ## Why this project exists
 
@@ -153,7 +167,8 @@ retail-ecs-fargate-multitier/
 ├── scripts/
 │   └── mirror-images.sh          One-time public->private ECR image mirroring
 ├── docs/
-│   ├── architecture.md           Design decisions, diagram, verification log
+│   ├── architecture.md           Current architecture reference: diagrams, service scope, cost
+│   ├── DECISIONS.md              Architecture Decision Records: why, in ADR format
 │   └── images/
 │       └── phase1/               Deployment evidence screenshots
 ├── .github/
@@ -185,7 +200,7 @@ Review the plan output fully before applying anything.
 tofu apply
 ```
 
-**Then, before the ECS services can successfully start:** this project pulls two images from `public.ecr.aws`, which is not reliably reachable from a private subnet with no NAT Gateway (confirmed the hard way, see [`docs/architecture.md`](docs/architecture.md)). The task definitions pull from private ECR mirrors instead, which must be populated once:
+**Then, before the ECS services can successfully start:** this project pulls two images from `public.ecr.aws`, which is not reliably reachable from a private subnet with no NAT Gateway (confirmed the hard way, see [`docs/DECISIONS.md`](docs/DECISIONS.md), ADR-006). The task definitions pull from private ECR mirrors instead, which must be populated once:
 
 ```bash
 ./scripts/mirror-images.sh
@@ -214,7 +229,7 @@ If the ECS services are already running and stuck retrying a failed pull, the sc
 
 **Phase 1 is complete: deployed, debugged, and verified end-to-end.**
 
-Infrastructure deployed cleanly on first apply. Getting the application actually working required root-causing two separate infrastructure issues (Public ECR image pulls not reachable via the private-ECR VPC endpoints; resolved by mirroring both images into a private ECR repository in this account) and one application-layer configuration bug (a mismatched environment variable name on the UI service caused it to silently call itself instead of the Carts service, meaning the app appeared fully functional while never actually writing to DynamoDB). All three are documented in full, including the diagnostic process, in the Decisions and Verification Log in [`docs/architecture.md`](docs/architecture.md).
+Infrastructure deployed cleanly on first apply. Getting the application actually working required root-causing two separate infrastructure issues (Public ECR image pulls not reachable via the private-ECR VPC endpoints; resolved by mirroring both images into a private ECR repository in this account) and one application-layer configuration bug (a mismatched environment variable name on the UI service caused it to silently call itself instead of the Carts service, meaning the app appeared fully functional while never actually writing to DynamoDB). All three are documented in full, including the diagnostic process, in [`docs/DECISIONS.md`](docs/DECISIONS.md) (ADR-006 and ADR-007).
 
 Verified working via direct evidence, not just healthy status checks: a cart item added through the live UI was confirmed present in the DynamoDB table via a direct scan.
 
@@ -224,4 +239,4 @@ Aurora's connectivity and the application's own database migration worked correc
 
 Verified working via direct evidence again: the live `/catalog` page renders real, Aurora-backed product data (GORM auto-seeds it on startup), not just a passing health check, see the product detail screenshot in the [Deployed](#deployed) section above.
 
-The infrastructure has since been torn down between sessions to control cost, a deliberate choice for this personal project, not an indication anything is broken. See [`docs/architecture.md`](docs/architecture.md) for the full debugging narrative and the "Getting started" section above to redeploy.
+The infrastructure has since been torn down between sessions to control cost, a deliberate choice for this personal project, not an indication anything is broken. See [`docs/DECISIONS.md`](docs/DECISIONS.md) for the full debugging narrative, [`docs/architecture.md`](docs/architecture.md) for current architecture reference, and the "Getting started" section above to redeploy.

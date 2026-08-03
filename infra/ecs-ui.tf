@@ -53,6 +53,10 @@ resource "aws_ecs_task_definition" "ui" {
         {
           name  = "RETAIL_UI_ENDPOINTS_CATALOG"
           value = "http://catalog.${var.project_name}.local:${var.catalog_container_port}"
+        },
+        {
+          name  = "RETAIL_UI_ENDPOINTS_CHECKOUT"
+          value = "http://checkout.${var.project_name}.local:${var.checkout_container_port}"
         }
       ]
       logConfiguration = {

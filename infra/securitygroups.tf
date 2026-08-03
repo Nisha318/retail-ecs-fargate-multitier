@@ -167,3 +167,55 @@ resource "aws_security_group" "aurora" {
     Name = "${var.project_name}-aurora-sg"
   }
 }
+
+resource "aws_security_group" "checkout_task" {
+  name        = "${var.project_name}-checkout-task"
+  description = "Checkout Fargate task security group"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "From UI service"
+    from_port       = var.checkout_container_port
+    to_port         = var.checkout_container_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ui_task.id]
+  }
+
+  egress {
+    description = "All outbound traffic (image pulls, logs, and Secrets Manager via VPC endpoints; Redis and Orders API within the VPC; no NAT Gateway in this design)"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-checkout-task-sg"
+  }
+}
+
+resource "aws_security_group" "redis" {
+  name        = "${var.project_name}-redis"
+  description = "ElastiCache Redis security group - accepts connections only from the Checkout task"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "Redis from Checkout service only"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.checkout_task.id]
+  }
+
+  egress {
+    description = "No outbound needed - Redis does not initiate connections"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-redis-sg"
+  }
+}

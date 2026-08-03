@@ -83,3 +83,23 @@ resource "aws_ecr_repository" "catalog" {
     Name = "${var.project_name}-ecr-catalog"
   }
 }
+
+resource "aws_ecr_repository" "checkout" {
+  name                 = "${var.project_name}/retail-store-sample-checkout"
+  image_tag_mutability = "IMMUTABLE"
+
+  # See aws_ecr_repository.ui for why this is intentionally true here.
+  force_delete = true
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  tags = {
+    Name = "${var.project_name}-ecr-checkout"
+  }
+}

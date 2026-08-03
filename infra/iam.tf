@@ -146,3 +146,63 @@ resource "aws_iam_role" "catalog_task" {
     }]
   })
 }
+
+# ---- Checkout: dedicated task execution role, same pattern as Catalog ----
+# Scoped to read exactly the two Redis connection secrets (writer and
+# reader URLs, each with the AUTH token embedded), so UI, Carts, and
+# Catalog's execution roles never gain access to Checkout's Redis
+# credentials, and vice versa.
+resource "aws_iam_role" "checkout_task_execution" {
+  name = "${var.project_name}-checkout-task-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "checkout_task_execution_managed" {
+  role       = aws_iam_role.checkout_task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy" "checkout_task_execution_secrets" {
+  name = "${var.project_name}-checkout-secrets-policy"
+  role = aws_iam_role.checkout_task_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = "secretsmanager:GetSecretValue"
+      Resource = [
+        aws_secretsmanager_secret.redis_writer_url.arn,
+        aws_secretsmanager_secret.redis_reader_url.arn
+      ]
+    }]
+  })
+}
+
+# ---- Checkout task role (no additional AWS API calls at runtime beyond
+# the direct HTTP call to Orders, which needs no IAM permission at all -
+# confirmed via checkout.controller.ts / the endpoints.orders config) ----
+resource "aws_iam_role" "checkout_task" {
+  name = "${var.project_name}-checkout-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}

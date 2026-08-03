@@ -1,6 +1,6 @@
 # IAM role assumed by this project's GitHub Actions pipeline (via OIDC),
-# scoped to read-only access on exactly the three ECR repos this project
-# owns (ui, cart, catalog), so CI can pull and scan the private mirror
+# scoped to read-only access on exactly the four ECR repos this project
+# owns (ui, cart, catalog, checkout), so CI can pull and scan the private mirror
 # images instead of scanning public.ecr.aws source images that differ
 # from what's actually deployed.
 #
@@ -88,7 +88,8 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
         Resource = [
           aws_ecr_repository.ui.arn,
           aws_ecr_repository.cart.arn,
-          aws_ecr_repository.catalog.arn
+          aws_ecr_repository.catalog.arn,
+          aws_ecr_repository.checkout.arn
         ]
       }
     ]

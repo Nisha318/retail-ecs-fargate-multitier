@@ -30,6 +30,8 @@ IMAGE_TAG="1.2.4"
 # catalog:1.2.4) before relying on it - same discipline that caught the
 # plural/singular "cart" naming issue in Phase 1.
 CATALOG_IMAGE_TAG="1.2.4"
+# Same caveat as CATALOG_IMAGE_TAG - not yet confirmed via docker pull.
+CHECKOUT_IMAGE_TAG="1.2.4"
 
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
@@ -60,8 +62,11 @@ mirror_image "public.ecr.aws/aws-containers/retail-store-sample-cart:${IMAGE_TAG
 mirror_image "public.ecr.aws/aws-containers/retail-store-sample-catalog:${CATALOG_IMAGE_TAG}" \
   "${PROJECT_NAME}/retail-store-sample-catalog" "${CATALOG_IMAGE_TAG}"
 
+mirror_image "public.ecr.aws/aws-containers/retail-store-sample-checkout:${CHECKOUT_IMAGE_TAG}" \
+  "${PROJECT_NAME}/retail-store-sample-checkout" "${CHECKOUT_IMAGE_TAG}"
+
 echo ""
-echo "Done. All three images are now in your private ECR repos."
+echo "Done. All four images are now in your private ECR repos."
 echo "If the ECS services already exist and are stuck retrying failed pulls,"
 echo "force a fresh deployment so they pick up the now-available images"
 echo "immediately instead of waiting for the next automatic retry:"
@@ -69,3 +74,4 @@ echo ""
 echo "  aws ecs update-service --cluster ${PROJECT_NAME}-cluster --service ui --force-new-deployment --region ${AWS_REGION}"
 echo "  aws ecs update-service --cluster ${PROJECT_NAME}-cluster --service carts --force-new-deployment --region ${AWS_REGION}"
 echo "  aws ecs update-service --cluster ${PROJECT_NAME}-cluster --service catalog --force-new-deployment --region ${AWS_REGION}"
+echo "  aws ecs update-service --cluster ${PROJECT_NAME}-cluster --service checkout --force-new-deployment --region ${AWS_REGION}"

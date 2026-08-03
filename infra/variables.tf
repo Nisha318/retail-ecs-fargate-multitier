@@ -110,3 +110,34 @@ variable "aurora_max_capacity" {
   type        = number
   default     = 2
 }
+
+# --- Phase 3: Checkout + ElastiCache Redis ---
+
+variable "checkout_image" {
+  description = "SOURCE image for the Checkout service - public.ecr.aws. Tag NOT YET CONFIRMED via docker pull. Confirm before first apply, same discipline as every other service in this project."
+  type        = string
+  default     = "public.ecr.aws/aws-containers/retail-store-sample-checkout:1.2.4"
+}
+
+variable "checkout_image_tag" {
+  description = "Tag for the Checkout source pull and its private ECR mirror. Kept separate from other services' tags since release cadence may differ."
+  type        = string
+  default     = "1.2.4"
+}
+
+variable "checkout_container_port" {
+  type    = number
+  default = 8080
+}
+
+variable "redis_node_type" {
+  description = "ElastiCache node type. cache.t4g.micro is the smallest current-generation type, appropriate for a personal dev/test project."
+  type        = string
+  default     = "cache.t4g.micro"
+}
+
+variable "redis_num_cache_clusters" {
+  description = "Number of nodes in the replication group (1 primary + N-1 replicas). Set to 2 for genuine primary/reader replication, confirmed necessary since Checkout's own code (RedisCheckoutRepository) actually uses both endpoints separately, not just accepts and ignores the reader config."
+  type        = number
+  default     = 2
+}
