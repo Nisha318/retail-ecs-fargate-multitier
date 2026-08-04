@@ -5,10 +5,17 @@ on:
     branches: [main]
     paths:
       - 'infra/**'
+      - '.github/workflows/pipeline.yml'
   pull_request:
     branches: [main]
     paths:
       - 'infra/**'
+      - '.github/workflows/pipeline.yml'
+  # Manual trigger, added after discovering the path filter above (by
+  # design) doesn't fire on every push, so there was no way to force a
+  # test run without also touching a file under infra/. Available from
+  # the Actions tab: select this workflow, "Run workflow".
+  workflow_dispatch:
 
 jobs:
   checkov:
