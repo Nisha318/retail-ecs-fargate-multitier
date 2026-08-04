@@ -1,16 +1,49 @@
 # Aurora MySQL Serverless v2 for the Catalog service. Configuration
 # (database name, master username, connection string format, schema
 # handling) confirmed against Catalog's actual source (README.md and
-# repository.go), not guessed - see docs/architecture.md Decisions and
-# Verification Log.
+# repository.go), not guessed - see docs/DECISIONS.md.
 #
-# Master password uses RDS's native managed-password feature rather than
-# a Terraform-generated random_password. AWS generates and stores the
-# password directly in Secrets Manager; Terraform never sees, generates,
-# or stores the plaintext at any point, including in state. This is the
-# strongest option available given Catalog's own code requires a real
-# username/password pair (confirmed via repository.go's GORM MySQL DSN
-# construction) rather than supporting IAM database authentication.
+# Master password is Terraform-generated (random_password, special =
+# false), NOT RDS's native managed-password feature. This is a deliberate
+# reversal of the original design, documented in DECISIONS.md as its own
+# ADR: AWS's managed password generator guarantees at least one
+# punctuation character in every password, with no way to exclude
+# specific ones. Catalog's connection code (repository.go) builds its
+# MySQL DSN with plain string formatting, no escaping, so a password
+# containing ")" or "?" (both structurally significant in a MySQL DSN)
+# corrupts the connection string outright. This isn't rare bad luck, it's
+# guaranteed to happen eventually given AWS's own generation rules. The
+# tradeoff: the plaintext password now exists in Terraform state, and
+# Aurora loses AWS's free automatic rotation. Same pattern already used
+# for Redis's AUTH token (elasticache.tf), for the same reason.
+
+resource "random_password" "aurora_master" {
+  length  = 32
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "aurora_master" {
+  name = "${var.project_name}-aurora-master-credentials"
+
+  # See the identical setting on redis_writer_url/redis_reader_url
+  # (elasticache.tf) for why: Secrets Manager's default 30-day recovery
+  # window blocks creating a same-named secret on the next apply after a
+  # teardown. Fixed here preemptively, confirmed the hard way on the
+  # Redis secrets first.
+  recovery_window_in_days = 0
+
+  tags = {
+    Name = "${var.project_name}-aurora-master-credentials"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "aurora_master" {
+  secret_id = aws_secretsmanager_secret.aurora_master.id
+  secret_string = jsonencode({
+    username = var.aurora_master_username
+    password = random_password.aurora_master.result
+  })
+}
 
 resource "aws_db_subnet_group" "aurora" {
   name       = "${var.project_name}-aurora-subnet-group"
@@ -34,8 +67,7 @@ resource "aws_rds_cluster" "catalog" {
 
   database_name   = var.aurora_db_name
   master_username = var.aurora_master_username
-
-  manage_master_user_password = true
+  master_password = random_password.aurora_master.result
 
   db_subnet_group_name   = aws_db_subnet_group.aurora.name
   vpc_security_group_ids = [aws_security_group.aurora.id]

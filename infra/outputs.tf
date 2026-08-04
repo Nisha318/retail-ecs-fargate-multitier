@@ -31,8 +31,8 @@ output "aurora_cluster_endpoint" {
 }
 
 output "aurora_master_secret_arn" {
-  description = "ARN of the AWS-managed Secrets Manager secret holding Aurora's master credentials. Retrieve the actual value only via `aws secretsmanager get-secret-value`, never printed here."
-  value       = aws_rds_cluster.catalog.master_user_secret[0].secret_arn
+  description = "ARN of the Terraform-generated Secrets Manager secret holding Aurora's master credentials. Retrieve the actual value only via `aws secretsmanager get-secret-value`, never printed here."
+  value       = aws_secretsmanager_secret.aurora_master.arn
 }
 
 output "redis_primary_endpoint" {

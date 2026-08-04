@@ -113,18 +113,19 @@ resource "aws_iam_role_policy" "catalog_task_execution_secrets" {
   name = "${var.project_name}-catalog-secrets-policy"
   role = aws_iam_role.catalog_task_execution.id
 
-  # Scoped to the one Aurora-managed secret only. If this fails at deploy
-  # time with an access-denied error mentioning KMS rather than Secrets
-  # Manager, the next step is an explicit kms:Decrypt grant on the
-  # secret's KMS key - not expected to be necessary with the default
-  # AWS-managed secretsmanager key, but not yet confirmed against a real
-  # deploy either.
+  # Scoped to the one Aurora secret only, now Terraform-generated rather
+  # than AWS-managed (see aurora.tf and DECISIONS.md for why). If this
+  # fails at deploy time with an access-denied error mentioning KMS
+  # rather than Secrets Manager, the next step is an explicit kms:Decrypt
+  # grant on the secret's KMS key - not expected to be necessary with the
+  # default AWS-managed secretsmanager key, but not yet confirmed against
+  # a real deploy either.
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
       Action   = "secretsmanager:GetSecretValue"
-      Resource = aws_rds_cluster.catalog.master_user_secret[0].secret_arn
+      Resource = aws_secretsmanager_secret.aurora_master.arn
     }]
   })
 }

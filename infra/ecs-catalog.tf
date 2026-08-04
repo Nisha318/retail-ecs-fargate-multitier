@@ -45,18 +45,22 @@ resource "aws_ecs_task_definition" "catalog" {
           value = var.aurora_db_name
         }
       ]
-      # Username and password both come from the same AWS-managed secret
-      # (see aurora.tf) via JSON key extraction, never as plain
-      # environment values. No static credentials anywhere in this
-      # project's code or state.
+      # Username and password come from a Terraform-generated secret
+      # (see aurora.tf), via JSON key extraction, never as plain
+      # environment values on the task definition itself. Unlike Carts'
+      # DynamoDB access or Checkout's original design intent, this secret
+      # IS in Terraform state, a deliberate, documented tradeoff (see
+      # DECISIONS.md) to guarantee a MySQL-DSN-safe password rather than
+      # risk another AWS-generated punctuation character breaking the
+      # connection.
       secrets = [
         {
           name      = "RETAIL_CATALOG_PERSISTENCE_USER"
-          valueFrom = "${aws_rds_cluster.catalog.master_user_secret[0].secret_arn}:username::"
+          valueFrom = "${aws_secretsmanager_secret.aurora_master.arn}:username::"
         },
         {
           name      = "RETAIL_CATALOG_PERSISTENCE_PASSWORD"
-          valueFrom = "${aws_rds_cluster.catalog.master_user_secret[0].secret_arn}:password::"
+          valueFrom = "${aws_secretsmanager_secret.aurora_master.arn}:password::"
         }
       ]
       logConfiguration = {

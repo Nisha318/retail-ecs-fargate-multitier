@@ -38,6 +38,11 @@ resource "aws_elasticache_replication_group" "checkout" {
   engine         = "redis"
   node_type      = var.redis_node_type
   num_cache_clusters = var.redis_num_cache_clusters
+  # Set explicitly rather than left to default. Without this, Terraform
+  # cannot know the port at plan time (it's an AWS-side default it
+  # wouldn't assign until apply), which breaks the connection-string
+  # construction below - confirmed the hard way via a plan-time error.
+  port = 6379
 
   # Required for the primary endpoint to remain valid across a failover,
   # and for the reader endpoint to exist at all with more than one node.
@@ -70,6 +75,15 @@ resource "aws_elasticache_replication_group" "checkout" {
 resource "aws_secretsmanager_secret" "redis_writer_url" {
   name = "${var.project_name}-redis-writer-url"
 
+  # Secrets Manager schedules a 30-day recovery window by default, even
+  # after `tofu destroy`, and refuses to create a new secret with the
+  # same name until that window elapses. This is a personal dev/test
+  # project torn down between sessions; skipping the window avoids a
+  # name collision on the very next apply. Same reasoning as ECR's
+  # force_delete and Aurora's skip_final_snapshot elsewhere in this
+  # project - a production version would not set this.
+  recovery_window_in_days = 0
+
   tags = {
     Name = "${var.project_name}-redis-writer-url"
   }
@@ -82,6 +96,9 @@ resource "aws_secretsmanager_secret_version" "redis_writer_url" {
 
 resource "aws_secretsmanager_secret" "redis_reader_url" {
   name = "${var.project_name}-redis-reader-url"
+
+  # See redis_writer_url above for why this is intentionally 0 here.
+  recovery_window_in_days = 0
 
   tags = {
     Name = "${var.project_name}-redis-reader-url"
