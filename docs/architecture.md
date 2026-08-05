@@ -194,16 +194,130 @@ flowchart TB
 
 Frozen historical snapshot as of Phase 2 completion, adding Catalog and Aurora MySQL Serverless v2 to the Phase 1 diagram above. Secrets Manager reached via VPC interface endpoint, same PrivateLink pattern as everything else, no NAT Gateway involved. Catalog's dedicated task execution role (not the shared one UI/Carts use) is not visible on this diagram since it's an IAM-level detail rather than a network one; see [`DECISIONS.md`](DECISIONS.md) (ADR-003) for that decision.
 
+## Diagram: Phase 3 (Checkout deployed; Orders planned)
+
+```mermaid
+flowchart TB
+    subgraph Internet[" "]
+        User([User])
+        R53[Route 53<br/>retail-multitier.nishacloudprojects.click]
+    end
+
+    WAF[[AWS WAF<br/>Common Rules + Known Bad Inputs]]
+    IGW[Internet Gateway]
+
+    subgraph VPC["VPC (10.20.0.0/16)"]
+        subgraph Public["Public Subnets (2 AZs)"]
+            ALB[Application Load Balancer<br/>HTTPS :443, ACM cert]
+        end
+
+        subgraph Private["Private Subnets (2 AZs)"]
+            UI["ECS Fargate: UI Service"]
+            Carts["ECS Fargate: Carts Service"]
+            Catalog["ECS Fargate: Catalog Service"]
+            Checkout["ECS Fargate: Checkout Service"]
+            Orders["Orders<br/>(not yet built)"]
+            SD["Service Discovery<br/>*.retail-multitier.local"]
+
+            subgraph Endpoints["VPC Endpoints (replace NAT Gateway)"]
+                EcrApi["ecr.api"]
+                EcrDkr["ecr.dkr"]
+                LogsEp["logs"]
+                SecretsEp["secretsmanager"]
+                S3Ep["s3 (gateway)"]
+                DdbEp["dynamodb (gateway)"]
+            end
+        end
+    end
+
+    DDB[(DynamoDB<br/>carts table)]
+    MySQL[(Aurora MySQL<br/>Serverless v2)]
+    Redis[(ElastiCache Redis<br/>primary + reader)]
+    CW[(CloudWatch Logs)]
+    ECR[(Private ECR<br/>this account)]
+
+    R53 -.->|alias record| ALB
+    WAF -.->|blocks malicious requests| ALB
+    User -->|HTTPS :443| IGW
+    IGW --> ALB
+    ALB -->|:8080| UI
+    UI -.->|resolves via| SD
+    SD -.->|DNS answer| Carts
+    SD -.->|DNS answer| Catalog
+    SD -.->|DNS answer| Checkout
+    UI -->|direct connection| Carts
+    UI -->|direct connection| Catalog
+    UI -->|direct connection| Checkout
+    Checkout -.->|endpoint left empty,<br/>documented mock fallback| Orders
+    Carts -->|via dynamodb gateway endpoint| DDB
+    Catalog -->|credentials via secretsmanager endpoint| MySQL
+    Checkout -->|writer + reader, credentials<br/>via secretsmanager endpoint| Redis
+    UI -.->|via endpoints| ECR
+    Carts -.->|via endpoints| ECR
+    Catalog -.->|via endpoints| ECR
+    Checkout -.->|via endpoints| ECR
+    UI -.->|via logs endpoint| CW
+    Carts -.->|via logs endpoint| CW
+    Catalog -.->|via logs endpoint| CW
+    Checkout -.->|via logs endpoint| CW
+
+    classDef publicNode fill:#a5d8ff,stroke:#1c7ed6,stroke-width:2px,color:#0b3d66
+    classDef computeNode fill:#d0bfff,stroke:#7048e8,stroke-width:2px,color:#3b1a80
+    classDef plannedNode fill:#e9ecef,stroke:#adb5bd,stroke-width:2px,color:#495057,stroke-dasharray: 3 3
+    classDef dataNode fill:#96f2d7,stroke:#0ca678,stroke-width:2px,color:#04432f
+    classDef securityNode fill:#ffe066,stroke:#f08c00,stroke-width:2px,color:#5c3c00
+    classDef externalNode fill:#ffd8a8,stroke:#e8590c,stroke-width:2px,color:#5c2a00
+    classDef dnsNode fill:#ffc9c9,stroke:#e03131,stroke-width:2px,color:#5c0a0a
+    classDef userNode fill:#eaeaea,stroke:#495057,stroke-width:2px,color:#212529
+
+    class User userNode
+    class R53 dnsNode
+    class WAF securityNode
+    class ALB,IGW publicNode
+    class UI,Carts,Catalog,Checkout,SD computeNode
+    class Orders plannedNode
+    class EcrApi,EcrDkr,LogsEp,SecretsEp,S3Ep,DdbEp,DDB,MySQL,Redis dataNode
+    class CW,ECR externalNode
+
+    style VPC fill:#f0f6ff,stroke:#4a9eed,stroke-width:2px
+    style Public fill:#e7f1ff,stroke:#1c7ed6,stroke-width:1px,stroke-dasharray: 3 3
+    style Private fill:#f3effd,stroke:#7048e8,stroke-width:1px,stroke-dasharray: 3 3
+    style Endpoints fill:#e6fcf5,stroke:#0ca678,stroke-width:1px,stroke-dasharray: 3 3
+    style Internet fill:none,stroke:none
+
+    subgraph Legend[" "]
+        L1[Public-facing]
+        L2[Compute]
+        L9[Planned, not yet built]
+        L3[Data store / endpoint]
+        L8[Security control]
+        L4[AWS platform service]
+        L5[DNS]
+    end
+    class L1 publicNode
+    class L2 computeNode
+    class L9 plannedNode
+    class L3 dataNode
+    class L8 securityNode
+    class L4 externalNode
+    class L5 dnsNode
+```
+
+Frozen historical snapshot as of Checkout's completion within Phase 3, adding Checkout and ElastiCache Redis (genuine primary/reader replication, confirmed necessary by reading Checkout's own source, see [`DECISIONS.md`](DECISIONS.md) ADR-009) to the Phase 2 diagram above. Orders is shown deliberately faded and dashed, not yet built. Checkout's connection to it is left empty, using Checkout's own documented graceful mock fallback rather than an undocumented risk, the same pattern that caused Phase 1's original UI/Carts bug. Checkout's dedicated task execution role, same IAM-level detail as Catalog's, is not visible on this network diagram; see [`DECISIONS.md`](DECISIONS.md) (ADR-009) for that decision.
+
 ## Services in scope
 
 **UI**: mirrored from public.ecr.aws/aws-containers/retail-store-sample-ui into a private ECR repository ([`ecr.tf`](../infra/ecr.tf)), which is what the running task definition actually pulls from
-Frontend service. Routes to Catalog and Carts. Catalog-dependent pages, previously unresolved in Phase 1 since Catalog wasn't deployed yet, now render correctly, confirmed via a live screenshot of `/catalog` showing real Aurora-backed product data (see Deployment evidence, Phase 2).
+Frontend service. Routes to Catalog, Carts, and Checkout. Catalog-dependent pages, previously unresolved in Phase 1 since Catalog wasn't deployed yet, now render correctly, confirmed via a live screenshot of `/catalog` showing real Aurora-backed product data (see Deployment evidence, Phase 2).
 
 **Carts**: mirrored from public.ecr.aws/aws-containers/retail-store-sample-cart (confirmed singular repository name via `docker pull`) into a private ECR repository, same as UI
 Supports either MongoDB or DynamoDB as a persistence backend. This build uses DynamoDB.
 
 **Catalog**: mirrored from public.ecr.aws/aws-containers/retail-store-sample-catalog into a private ECR repository, same pattern as UI/Carts
 Go service, MySQL persistence. Uses Aurora MySQL Serverless v2 (see Data store rationale below, and [`aurora.tf`](../infra/aurora.tf) for the actual configuration). Auto-migrates its own schema and seeds itself with demo product/tag data on startup via GORM, confirmed via `repository.go` before deploying, no manual schema or seed step required.
+
+**Checkout**: mirrored from public.ecr.aws/aws-containers/retail-store-sample-checkout into a private ECR repository, same pattern as UI/Carts/Catalog
+Node.js/NestJS service, Redis persistence. Uses ElastiCache with genuine primary/reader replication (see Data store rationale below, and [`elasticache.tf`](../infra/elasticache.tf) for the actual configuration), confirmed necessary by reading Checkout's own source rather than assumed. Its own endpoint to Orders is deliberately left empty using a documented graceful fallback; Orders does not exist yet.
 
 ## DynamoDB table schema
 
@@ -216,7 +330,7 @@ Reused from AWS's own ECS Immersion Day CloudFormation template (confirmed accur
 
 ## Target architecture (all phases)
 
-The diagrams above show Phase 1 and Phase 2 as they were actually deployed. This is the full five-service target this project builds toward across Phases 1 through 3, shown at the infrastructure level, same style, extended.
+The diagrams above show Phase 1 through the completed part of Phase 3 as they were actually deployed. This is the full five-service target this project builds toward, shown at the infrastructure level, same style, extended.
 
 ```mermaid
 flowchart TB
@@ -322,7 +436,7 @@ flowchart TB
     class L4 externalNode
     class L5 dnsNode
 ```
-*Full target infrastructure across all three phases. Phase 1 (UI, Carts) and Phase 2 (+ Catalog, Aurora MySQL) are deployed and verified; Checkout and Orders are planned for Phase 3. Solid arrows are application traffic; dashed arrows are infrastructure and control-plane traffic routed through VPC endpoints.*
+*Full target infrastructure across all three phases. Phase 1 (UI, Carts), Phase 2 (+ Catalog, Aurora MySQL), and the Checkout portion of Phase 3 (+ ElastiCache Redis) are deployed and verified; Orders remains planned. Solid arrows are application traffic; dashed arrows are infrastructure and control-plane traffic routed through VPC endpoints.*
 
 ## Logical service architecture
 
@@ -406,6 +520,12 @@ Reference: AWS Prescriptive Guidance, [Enabling data persistence in microservice
   - I/O: $0.20 per million requests, also trivial at dev/test query volumes.
   - Practical effect for this project's actual usage pattern (deployed, tested, torn down, not left running): cost is roughly *(minimum ACU while active) × (hours actually deployed) × $0.12*, well under a dollar for a typical debugging session.
 
+### Phase 3 additions (Checkout, approximate, us-east-1)
+
+- Fargate (Checkout, minimal task size, not running 24/7): pennies per hour while active, same as every other service
+- **ElastiCache Redis**, the real cost driver added in this phase, and a genuinely different cost model than everything else in this project so far: unlike DynamoDB (pay-per-request) or Aurora Serverless v2 (can scale toward zero), ElastiCache nodes are **always-on and billed hourly regardless of activity**, there is no pause state. Two `cache.t4g.micro` nodes (the smallest current-generation type) running only during active dev sessions is still cheap in absolute terms, but the cost model itself is worth remembering as different from the rest of this project's mostly-idle-is-mostly-free pattern.
+- **A real operational finding, confirmed the hard way**: leaving the infrastructure up overnight by accident revealed that Aurora's `min_capacity = 0` auto-pause did not actually engage, even though it is correctly configured. Catalog's own health check queries Aurora for real data every 15 seconds, and a database receiving a genuine query that frequently never accumulates the sustained idle period auto-pause requires. In effect, a correctly-designed health check quietly prevented a correctly-designed cost optimization from ever activating. Not fixed as of this writing, worth knowing before assuming `min_capacity = 0` guarantees near-zero cost during any period the service is left running, health-check design matters as much as the Aurora setting itself.
+
 ## Deployment evidence
 
 ### Phase 1
@@ -445,11 +565,22 @@ Reference: AWS Prescriptive Guidance, [Enabling data persistence in microservice
 ![Aurora cluster available in the RDS console, showing active ACU usage](images/phase2/aurora-available.png)
 *Aurora Serverless v2 scaled up from its paused (0 ACU) state and actively serving, not just provisioned.*
 
-![Aurora's AWS-managed master secret in Secrets Manager](images/phase2/aurora-managed-secret.png)
-*The `rds!cluster-...` secret AWS generated and manages directly, confirming Terraform never touched the plaintext master password.*
+![Aurora's Secrets Manager entry, holding the master credentials](images/phase2/aurora-managed-secret.png)
+*At the time this screenshot was taken, this secret was AWS-managed (`rds!cluster-...` naming). That design was later reversed, see [`DECISIONS.md`](DECISIONS.md) (ADR-010): AWS's managed password generator produced a password containing a MySQL-DSN-breaking character and caused a real outage. The secret is now Terraform-generated instead, this screenshot is kept as historical record of the original design, not the current one.*
 
 ![Private ECR repositories for all three services in the console](images/phase2/ecr-repositories.png)
 *The private ECR mirror described in [`DECISIONS.md`](DECISIONS.md) (ADR-006), now complete across all three services. Confirms two Terraform-configured settings actually took effect: immutable tags (`image_tag_mutability = "IMMUTABLE"`) and the deliberate AES-256 encryption choice documented under CKV_AWS_136, not just default AWS-managed encryption nobody thought about.*
 
 ![Matching image digests between public.ecr.aws and the private mirror, for all three services](images/phase2/ecr-digest-match.png)
 *The actual mirroring claim made visible: identical Image IDs between each public source image and its private mirror (cart, ui, catalog), confirming the mirror script produces byte-identical copies, not just repositories with matching names and tags.*
+
+### Phase 3 (Checkout deployed; Orders planned)
+
+![ECS console showing all four services (ui, carts, catalog, checkout) healthy and at steady state](images/phase3/ecs-all-services-healthy.png)
+*All four services, including Checkout, showing "Completed" deployment status with stable task counts.*
+
+![CloudWatch Logs showing real Checkout HTTP traffic, response body size growing across successive GET requests](images/phase3/checkout-logs.png)
+*Real `POST /checkout/:id/update` and `GET /checkout/:id` traffic, response body size growing steadily across requests (160 → 282 → 671 → 890 → 928 bytes), direct evidence state is genuinely accumulating between requests, not just a connection succeeding.*
+
+![CloudWatch metrics showing SetTypeCmds and GetTypeCmds spiking exactly during real Checkout traffic, flat zero for hours before and after](images/phase3/checkout-redis-metrics.png)
+*The direct, ground-truth companion to the logs above: a 12-hour window showing true zero Redis command activity except for one clear spike, timed precisely against real application traffic. `SetTypeCmds` confirms `RedisCheckoutRepository`'s writer client (`set`) was genuinely used; `GetTypeCmds` confirms the reader client (`get`) was too, exactly the primary/reader split ADR-009 established the application code actually exercises. This is the real proof Checkout works, not the health check, which ADR-009 confirmed only checks a chaos-simulation flag and never touches Redis at all. The same long flat window also independently confirms that finding: ECS's own health check hit `/health` every 15 seconds throughout, and none of it shows up here.*

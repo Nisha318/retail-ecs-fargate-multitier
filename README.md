@@ -116,7 +116,7 @@ This project replaces an earlier attempt at AWS's own ECS Immersion Day workshop
 |---|---|---|---|
 | 1 | UI + Carts | DynamoDB | Deployed and verified |
 | 2 | + Catalog | Aurora MySQL (Serverless v2) | Deployed and verified |
-| 3 | + Checkout, Orders | ElastiCache Redis, Aurora PostgreSQL, Amazon MQ | Planned |
+| 3 | + Checkout, Orders | ElastiCache Redis, Aurora PostgreSQL, Amazon MQ | Checkout deployed and verified; Orders planned |
 
 ## Phase 1 architecture
 
@@ -133,12 +133,22 @@ See [`docs/architecture.md`](docs/architecture.md) for the full design breakdown
 ## Phase 2 architecture
 
 - ECS Fargate Catalog service, added to the same cluster and VPC as Phase 1, no new networking required
-- Aurora MySQL Serverless v2 for Catalog's product data, master password fully AWS-managed via Secrets Manager (`manage_master_user_password`), never generated or stored by Terraform
-- `min_capacity = 0` on Aurora, enabling auto-pause when idle, since this project gets torn down between sessions rather than left running
+- Aurora MySQL Serverless v2 for Catalog's product data. Master password is Terraform-generated (`random_password`, no special characters), not AWS-managed, a deliberate reversal from the original design after AWS's managed-password feature generated a password containing a MySQL-DSN-breaking character and caused a real outage. See [`docs/DECISIONS.md`](docs/DECISIONS.md) (ADR-010) for the full story.
+- `min_capacity = 0` on Aurora, enabling auto-pause when idle, since this project gets torn down between sessions rather than left running, though note: a health check that queries the database every 15 seconds (Catalog's own) can itself prevent auto-pause from ever engaging, confirmed the hard way while capturing Phase 3 evidence
 - Catalog gets its **own dedicated task execution role**, not the shared one UI and Carts use, so read access to Aurora's credentials stays scoped to Catalog only
 - Secrets Manager reached via VPC interface endpoint, same PrivateLink pattern as everything else in this project, no NAT Gateway involved
 - Catalog is internal-only, reachable via service discovery exactly like Carts, no public exposure or ALB target group
 - Closes Phase 1's known gap: UI's Catalog integration (`RETAIL_UI_ENDPOINTS_CATALOG`) now resolves correctly, confirmed via a live screenshot of real, Aurora-backed product data
+
+## Phase 3 architecture (Checkout deployed; Orders planned)
+
+- ECS Fargate Checkout service (Node.js/NestJS), added to the same cluster and VPC as Phases 1 and 2
+- ElastiCache Redis with genuine primary/reader replication (`automatic_failover_enabled`, `multi_az_enabled`), not a single-node shortcut, confirmed necessary by reading Checkout's own source: it opens two separate `ioredis` clients, one against each endpoint, not one endpoint accepted and ignored
+- Both Redis connection strings (writer and reader, full URL with the AUTH token embedded) stored as Terraform-generated Secrets Manager secrets, same pattern as Aurora's password after ADR-010, `random_password` with no special characters, since ElastiCache has no AWS-managed auto-password equivalent to begin with
+- Checkout gets its **own dedicated task execution role**, same least-privilege pattern as Catalog, scoped to read only its two Redis secrets
+- `RETAIL_CHECKOUT_ENDPOINTS_ORDERS` deliberately left empty. Checkout's own documentation describes a graceful mock fallback for this case, confirmed before deploying, not an undocumented risk like Phase 1's original UI/Carts bug
+- Health check uses Checkout's real `/health` endpoint, confirmed to be liveness-only (it does not verify Redis connectivity). Real proof that Checkout actually reads and writes to Redis came from CloudWatch's `SetTypeCmds`/`GetTypeCmds` metrics correlated against real application traffic timestamps, not from the health check. See [`docs/architecture.md`](docs/architecture.md) Deployment evidence and [`docs/DECISIONS.md`](docs/DECISIONS.md) (ADR-009) for the full verification story
+- Orders is not yet built. Once it exists, Checkout's own source needs re-checking to resolve an open question: it calls Orders via direct HTTP today, which contradicts an early assumption (baked into the Logical Service diagram) that Checkout publishes to Amazon MQ instead
 
 ## Repo structure
 
@@ -225,6 +235,12 @@ If the ECS services are already running and stuck retrying a failed pull, the sc
 ![A cart item added in the UI, confirmed present in the DynamoDB table via AWS console](docs/images/phase1/cart-item-dynamodb-2.png)
 *The same item confirmed in the DynamoDB table via a direct scan, verifying the full request path actually persisted data end to end.*
 
+![ECS console showing all four services (ui, carts, catalog, checkout) healthy and at steady state](docs/images/phase3/ecs-all-services-healthy.png)
+*Phase 3: Checkout joins the other three services, all "Completed" with stable task counts.*
+
+![CloudWatch metrics showing SetTypeCmds and GetTypeCmds spiking exactly during real Checkout traffic, flat zero for hours before and after](docs/images/phase3/checkout-redis-metrics.png)
+*The real proof Checkout works, not the health check: a 12-hour window showing true zero Redis command activity except for one clear spike lining up precisely with real application traffic timestamps in CloudWatch Logs, confirming Checkout genuinely reads and writes to Redis. See [`docs/DECISIONS.md`](docs/DECISIONS.md) (ADR-009) for why the health check alone couldn't prove this.*
+
 ## Status
 
 **Phase 1 is complete: deployed, debugged, and verified end-to-end.**
@@ -238,5 +254,13 @@ Verified working via direct evidence, not just healthy status checks: a cart ite
 Aurora's connectivity and the application's own database migration worked correctly on the very first attempt, confirmed directly in CloudWatch Logs. The actual bug was different from Phase 1's: Catalog's task health check trusted the service's own documented "test access" endpoint (`/catalogue`), which turned out to be wrong for the deployed version. The logs made this unambiguous, the health check's `/catalogue` requests returned a clean `404` on a 15-second loop, while genuine traffic from UI was simultaneously succeeding against `/catalog/products` in the same log stream. Fixed by pointing the health check at the path already confirmed working from real traffic, not another guess from documentation.
 
 Verified working via direct evidence again: the live `/catalog` page renders real, Aurora-backed product data (GORM auto-seeds it on startup), not just a passing health check, see the product detail screenshot in the [Deployed](#deployed) section above.
+
+A second, unrelated Catalog incident surfaced later, after a full teardown and redeploy: AWS's managed password generator produced a password containing a MySQL-DSN-breaking character, causing a real outage despite Aurora itself connecting successfully. Fixed by switching to a Terraform-generated password with no special characters at all, full story in [`docs/DECISIONS.md`](docs/DECISIONS.md) (ADR-010).
+
+**Phase 3 is in progress: Checkout and ElastiCache Redis deployed, debugged, and verified; Orders not yet built.**
+
+Checkout's configuration was fully confirmed against its own source before writing any infrastructure, not assumed, including a real finding: the service's own `/health` endpoint only checks a chaos-simulation flag and never verifies Redis connectivity, so a passing health check alone would not have been trustworthy evidence. Real proof came from CloudWatch's `SetTypeCmds`/`GetTypeCmds` metrics correlated directly against real application traffic, confirming Checkout genuinely reads and writes to Redis, full story in [`docs/DECISIONS.md`](docs/DECISIONS.md) (ADR-009).
+
+Orders is deliberately deferred. Checkout's endpoint to it is left empty, using the service's own documented graceful mock fallback rather than an undocumented risk, so Checkout was built, deployed, and fully verified on its own before Orders exists.
 
 The infrastructure has since been torn down between sessions to control cost, a deliberate choice for this personal project, not an indication anything is broken. See [`docs/DECISIONS.md`](docs/DECISIONS.md) for the full debugging narrative, [`docs/architecture.md`](docs/architecture.md) for current architecture reference, and the "Getting started" section above to redeploy.
